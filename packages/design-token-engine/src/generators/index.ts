@@ -1,4 +1,5 @@
 import type { DesignTokenSet } from '@design2code/design-ast';
+import { generateFlutterThemeFiles } from './flutter-theme.js';
 
 export interface TokenOutput {
   path: string;
@@ -6,29 +7,11 @@ export interface TokenOutput {
   language: string;
 }
 
+export { generateFlutterThemeFiles } from './flutter-theme.js';
+
+/** Backward-compatible single-file theme export */
 export function generateFlutterTheme(tokens: DesignTokenSet): TokenOutput {
-  const colorLines = tokens.colors.map(
-    (c) => `  static const Color ${toCamelCase(c.name)} = Color(0xFF${c.value.replace('#', '')});`,
-  );
-  const spacingLines = tokens.spacing.map(
-    (s) => `  static const double ${toCamelCase(s.name)} = ${s.value};`,
-  );
-
-  return {
-    path: 'lib/core/theme/app_tokens.dart',
-    language: 'dart',
-    content: `import 'package:flutter/material.dart';
-
-/// Auto-generated design tokens
-class AppTokens {
-  AppTokens._();
-
-${colorLines.join('\n')}
-
-${spacingLines.join('\n')}
-}
-`,
-  };
+  return generateFlutterThemeFiles(tokens)[0];
 }
 
 export function generateTailwindConfig(tokens: DesignTokenSet): TokenOutput {

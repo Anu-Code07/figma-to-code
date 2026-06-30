@@ -169,3 +169,4 @@ function findNodeById(root: DesignNode, id: string): DesignNode | null {
 }
 
 export * from './utils.js';
+export * from './codegen/index.js';
