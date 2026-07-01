@@ -9,6 +9,7 @@ import { detectComponents } from '@design2code/component-detector';
 import { extractTokens, mergeWithDesignSystem } from '@design2code/design-token-engine';
 import { createAIEngine } from '@design2code/ai-engine';
 import { createProvider } from '@design2code/ai-engine';
+import { createUIFidelityEnhancer } from '@design2code/ai-engine';
 import { createMergeEngine, detectProject } from '@design2code/merge-engine';
 import type { MergeResult } from '@design2code/merge-engine';
 import { getGenerator } from './registry.js';
@@ -31,18 +32,20 @@ export class DesignCompiler {
     options: CompileOptions,
     generator?: Generator,
   ): Promise<CompileResult> {
-    // 1. Extract & merge design tokens
+    // 1. Extract design tokens
     document.tokens = extractTokens(document);
 
+    // 2. Load design system & merge tokens
+    let designSystem;
     if (options.designSystemPath) {
-      const designSystem = await parseDesignMd(options.designSystemPath);
+      designSystem = await parseDesignMd(options.designSystemPath);
       document.tokens = mergeWithDesignSystem(document.tokens, designSystem);
     }
 
-    // 2. Component detection
+    // 3. Component detection
     detectComponents(document);
 
-    // 3. AI optimization
+    // 4. AI optimization (rule-based + optional Claude/OpenAI API)
     if (options.aiEnabled !== false) {
       const provider = createProvider(
         options.aiProvider ?? 'local',
@@ -50,9 +53,13 @@ export class DesignCompiler {
       );
       const aiEngine = createAIEngine({ provider, enabled: true });
       document = await aiEngine.optimize(document);
+
+      // AI UI fidelity pass — pixel-perfect corrections when API key is configured
+      const uiEnhancer = createUIFidelityEnhancer({ provider, enabled: provider.name !== 'local' });
+      document = await uiEnhancer.enhance(document);
     }
 
-    // 4. Detect existing project
+    // 5. Detect existing project
     const project = options.projectRoot ? await detectProject(options.projectRoot) : null;
 
     // 5. Get generator & run pipeline
@@ -60,6 +67,7 @@ export class DesignCompiler {
     let context: GeneratorContext = {
       options,
       document,
+      designSystem,
       project,
     };
 

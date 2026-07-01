@@ -61,7 +61,7 @@ describe('FlutterGenerator', () => {
     const widget = result.files.find((f) => f.path.includes('shared/widgets/login_button.dart'));
     expect(widget).toBeDefined();
     expect(widget!.content).toContain('class LoginButton extends StatelessWidget');
-    expect(widget!.content).toContain('AppColors');
+    expect(widget!.content).toContain('Color(0xFF6366F1)');
     expect(widget!.content).toContain('Semantics');
   });
 
