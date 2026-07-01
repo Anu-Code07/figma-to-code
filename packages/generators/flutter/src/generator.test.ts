@@ -58,11 +58,68 @@ describe('FlutterGenerator', () => {
 
   it('generates component with clean widget structure', async () => {
     const result = await generator.generate(buildContext('component'));
-    const widget = result.files.find((f) => f.path.includes('shared/widgets/login_button.dart'));
+    const widget = result.files.find((f) => f.path.endsWith('login_button.dart'));
     expect(widget).toBeDefined();
     expect(widget!.content).toContain('class LoginButton extends StatelessWidget');
     expect(widget!.content).toContain('Color(0xFF6366F1)');
     expect(widget!.content).toContain('Semantics');
+  });
+
+  it('decomposes nested components into compound sub-widgets', async () => {
+    const cardRoot = createDesignNode({
+      id: 'card-1',
+      type: 'frame',
+      name: 'Product Card',
+      semanticType: 'card',
+      layout: { mode: 'vertical' },
+      style: { backgroundColor: { hex: '#FFFFFF' } },
+      children: [
+        createDesignNode({
+          id: 'btn-1',
+          type: 'component',
+          name: 'Buy Button',
+          semanticType: 'button',
+          layout: { mode: 'none' },
+          style: { backgroundColor: { hex: '#6366F1' } },
+          text: { content: 'Buy Now' },
+          children: [],
+        }),
+      ],
+    });
+
+    const document = new DesignASTBuilder().setName('Shop').setRoot(cardRoot).build();
+    document.components = [
+      {
+        id: 'comp-card',
+        type: 'card',
+        name: 'Product Card',
+        nodeId: 'card-1',
+        confidence: 0.9,
+        reusable: true,
+      },
+      {
+        id: 'comp-btn',
+        type: 'button',
+        name: 'Buy Button',
+        nodeId: 'btn-1',
+        confidence: 0.95,
+        reusable: true,
+      },
+    ];
+
+    const result = await generator.generate({
+      options: { framework: 'flutter' as const, scope: 'component', includeTests: false },
+      document,
+      project: null,
+    });
+
+    const paths = result.files.map((f) => f.path);
+    expect(paths.some((p) => p.endsWith('product_card/buy_button.dart'))).toBe(true);
+    expect(paths.some((p) => p.endsWith('product_card/product_card.dart'))).toBe(true);
+
+    const parent = result.files.find((f) => f.path.endsWith('product_card/product_card.dart'));
+    expect(parent!.content).toContain('const BuyButton()');
+    expect(parent!.content).toContain("import 'buy_button.dart'");
   });
 
   it('generates full clean architecture feature module', async () => {

@@ -1,5 +1,11 @@
 import type { GenerationResult, GeneratedFile } from '@design2code/design-ast';
 import { BaseGenerator, type GeneratorContext } from '@design2code/generator-sdk';
+import {
+  generateCompoundFiles,
+  flutterCompoundHooks,
+  type CompoundEmitter,
+} from '@design2code/generator-sdk';
+import type { FlutterFidelityEmitter } from '@design2code/generator-sdk';
 import { generateFlutterThemeFiles } from '@design2code/design-token-engine';
 import { FlutterWidgetRenderer } from './widget-renderer.js';
 import { generateCoreLayer, generateFeatureModule } from './feature-scaffold.js';
@@ -30,21 +36,31 @@ export class FlutterGenerator extends BaseGenerator {
       files.push(...generateCoreLayer());
     }
 
-    // ── Shared component widgets (component scope) ────────────
+    // ── Shared component widgets (component scope) — compound pattern ─
     if (context.options.scope === 'component') {
+      const hooks = flutterCompoundHooks(
+        (node, name, emitter, registry, imports) =>
+          renderer.renderWidget(node, name, emitter as FlutterFidelityEmitter, registry, imports),
+        () => renderer.createEmitter() as CompoundEmitter,
+      );
+
       for (const node of nodes) {
-        const name = toPascalCase(node.name);
-        const snake = toSnakeCase(name);
-        files.push(
-          this.createFile(
-            `lib/shared/widgets/${snake}.dart`,
-            renderer.renderWidget(node, name),
-            'dart',
-            'component',
-          ),
+        const { files: compoundFiles, plan } = generateCompoundFiles(
+          node,
+          context,
+          (path, content, language, kind) => this.createFile(path, content, language, kind),
+          hooks,
         );
+        files.push(...compoundFiles);
+
         if (context.options.includeTests) {
-          files.push(this.generateWidgetTest(name, snake));
+          const name = toPascalCase(node.name);
+          const snake = toSnakeCase(name);
+          const importPath =
+            plan.components.length > 0
+              ? `package:design2code_app/shared/widgets/${snake}/${snake}.dart`
+              : `package:design2code_app/shared/widgets/${snake}.dart`;
+          files.push(this.generateWidgetTest(name, importPath));
         }
       }
     }
@@ -122,12 +138,13 @@ export class FlutterGenerator extends BaseGenerator {
     };
   }
 
-  private generateWidgetTest(name: string, snake: string): GeneratedFile {
+  private generateWidgetTest(name: string, importPath: string): GeneratedFile {
+    const snake = importPath.split('/').pop()!.replace('.dart', '');
     return this.createFile(
       `test/widgets/${snake}_test.dart`,
       `import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:design2code_app/shared/widgets/${snake}.dart';
+import '${importPath}';
 
 void main() {
   group('${name}', () {

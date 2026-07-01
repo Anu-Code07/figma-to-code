@@ -4,42 +4,59 @@ import { FigmaFidelityEngine } from '../figma-fidelity.js';
 import { TokenResolver } from '../tokens.js';
 import { escapeDart } from '../escape.js';
 import type { DesignTokenSet } from '@design2code/design-ast';
+import type { ComponentRegistry } from '../compound-plan.js';
 
 /** Emits pixel-perfect Flutter widget code from Figma AST nodes */
 export class FlutterFidelityEmitter {
   private fidelity = new FigmaFidelityEngine();
   private tokens: TokenResolver;
+  private registry?: ComponentRegistry;
 
   constructor(tokenSet: DesignTokenSet) {
     this.tokens = new TokenResolver(tokenSet, { framework: 'flutter' });
   }
 
-  renderNode(node: DesignNode, indent: number): string {
+  setRegistry(registry: ComponentRegistry | undefined): void {
+    this.registry = registry;
+  }
+
+  renderNode(node: DesignNode, indent: number, registry?: ComponentRegistry): string {
+    const activeRegistry = registry ?? this.registry;
+    if (activeRegistry?.shouldReference(node.id)) {
+      const pad = '  '.repeat(indent);
+      const name = activeRegistry.getComponentName(node.id);
+      return `${pad}const ${name}()`;
+    }
+
     const pad = '  '.repeat(indent);
     const s = this.fidelity.compute(node);
 
     if (node.semanticType === 'button') {
-      return this.emitButton(node, s, pad);
+      return this.emitButton(node, s, pad, activeRegistry);
     }
     if (node.semanticType === 'text-field' || node.semanticType === 'search-bar') {
       return this.emitTextField(node, s, pad);
     }
     if (node.semanticType === 'card') {
-      return this.emitCard(node, s, pad);
+      return this.emitCard(node, s, pad, activeRegistry);
     }
     if (node.type === 'text' && node.text) {
       return this.emitText(node, s, pad);
     }
     if (node.layout.mode === 'horizontal' || node.layout.mode === 'vertical') {
-      return this.emitFlex(node, s, pad);
+      return this.emitFlex(node, s, pad, activeRegistry);
     }
     if (node.children.length === 0) {
       return this.emitContainer(node, s, pad);
     }
-    return this.emitContainerWithChildren(node, s, pad);
+    return this.emitContainerWithChildren(node, s, pad, activeRegistry);
   }
 
-  private emitButton(node: DesignNode, s: FigmaComputedStyle, pad: string): string {
+  private renderChild(node: DesignNode, indent: number, registry?: ComponentRegistry): string {
+    return this.renderNode(node, indent, registry);
+  }
+
+  private emitButton(node: DesignNode, s: FigmaComputedStyle, pad: string, _registry?: ComponentRegistry): string {
     const label = node.text?.content ?? node.name;
     const bg = s.backgroundColor ? this.tokens.color(s.backgroundColor) : 'AppColors.primary';
     const radius = s.borderRadius ? this.borderRadiusExpr(s.borderRadius) : 'AppRadius.md';
@@ -90,10 +107,10 @@ ${pad}  ),
 ${pad})`;
   }
 
-  private emitCard(node: DesignNode, s: FigmaComputedStyle, pad: string): string {
+  private emitCard(node: DesignNode, s: FigmaComputedStyle, pad: string, registry?: ComponentRegistry): string {
     const child =
       node.children.length > 0
-        ? this.renderNode(node.children[0], indentLevel(pad) + 2)
+        ? this.renderChild(node.children[0], indentLevel(pad) + 2, registry)
         : 'const SizedBox.shrink()';
     const radius = s.borderRadius ? this.borderRadiusExpr(s.borderRadius) : 'AppRadius.lg';
 
@@ -119,12 +136,14 @@ ${pad}  textAlign: ${align},
 ${pad})`;
   }
 
-  private emitFlex(node: DesignNode, s: FigmaComputedStyle, pad: string): string {
+  private emitFlex(node: DesignNode, s: FigmaComputedStyle, pad: string, registry?: ComponentRegistry): string {
     const isRow = s.flexDirection === 'row';
     const widget = isRow ? 'Row' : 'Column';
     const mainAxis = isRow ? 'MainAxisAlignment' : 'MainAxisAlignment';
     const crossAxis = isRow ? 'CrossAxisAlignment' : 'CrossAxisAlignment';
-    const children = node.children.map((c) => this.renderNode(c, indentLevel(pad) + 2)).join(`,\n${pad}    `);
+    const children = node.children
+      .map((c) => this.renderChild(c, indentLevel(pad) + 2, registry))
+      .join(`,\n${pad}    `);
     const gap = s.gap ?? 0;
 
     return `${widget}(
@@ -143,8 +162,15 @@ ${this.sizeExpr(s, pad)}${pad}  decoration: ${this.boxDecorationExpr(s)},
 ${pad})`;
   }
 
-  private emitContainerWithChildren(node: DesignNode, s: FigmaComputedStyle, pad: string): string {
-    const children = node.children.map((c) => this.renderNode(c, indentLevel(pad) + 2)).join(`,\n${pad}      `);
+  private emitContainerWithChildren(
+    node: DesignNode,
+    s: FigmaComputedStyle,
+    pad: string,
+    registry?: ComponentRegistry,
+  ): string {
+    const children = node.children
+      .map((c) => this.renderChild(c, indentLevel(pad) + 2, registry))
+      .join(`,\n${pad}      `);
     const gap = s.gap ?? 0;
     const direction = s.flexDirection === 'row' ? 'Axis.horizontal' : 'Axis.vertical';
 

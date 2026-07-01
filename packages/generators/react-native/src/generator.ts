@@ -1,8 +1,14 @@
 import type { GenerationResult, DesignNode, GeneratedFile } from '@design2code/design-ast';
 import { BaseGenerator, type GeneratorContext } from '@design2code/generator-sdk';
-import { ReactNativeFidelityEmitter } from '@design2code/generator-sdk';
+import {
+  ReactNativeFidelityEmitter,
+  generateCompoundFiles,
+  reactFamilyCompoundHooks,
+  FigmaFidelityEngine,
+  type ComponentRegistry,
+  type CompoundEmitter,
+} from '@design2code/generator-sdk';
 import { generateReactNativeTheme } from '@design2code/design-token-engine';
-import { FigmaFidelityEngine } from '@design2code/generator-sdk';
 
 export class ReactNativeGenerator extends BaseGenerator {
   readonly name = 'react-native';
@@ -16,19 +22,36 @@ export class ReactNativeGenerator extends BaseGenerator {
     const theme = generateReactNativeTheme(context.document.tokens);
     files.push(this.createFile(theme.path, theme.content, 'typescript', 'token'));
 
-    for (const node of nodes) {
-      const name = this.toPascalCase(node.name);
-      const kind = context.options.scope === 'screen' ? 'screen' : 'component';
-      const basePath = this.getOutputPath(node.name, kind, context);
-      const score = fidelity.fidelityScore(node);
-      files.push(
-        this.createFile(
-          `${basePath}/${name}.tsx`,
-          this.generateComponent(node, name, score),
-          'typescript',
-          kind,
+    const hooks = reactFamilyCompoundHooks(
+      (node, name, emitter, registry, imports, _isRoot) =>
+        this.generateCompoundComponent(
+          node,
+          name,
+          emitter as ReactNativeFidelityEmitter,
+          registry,
+          imports,
         ),
+      () => new ReactNativeFidelityEmitter() as CompoundEmitter,
+      (rootName) => `src/components/${this.toKebabCase(rootName)}`,
+      (plan) => `src/components/${plan.rootName}/${plan.rootName}.tsx`,
+    );
+
+    for (const node of nodes) {
+      const score = fidelity.fidelityScore(node);
+      const kind = context.options.scope === 'screen' ? 'screen' : 'component';
+      const { files: compoundFiles } = generateCompoundFiles(
+        node,
+        context,
+        (path, content, language) =>
+          this.createFile(
+            path,
+            content.replace('FIGMA_FIDELITY_SCORE', String(score)),
+            language,
+            kind,
+          ),
+        hooks,
       );
+      files.push(...compoundFiles);
     }
 
     if (context.options.scope === 'feature') {
@@ -51,22 +74,29 @@ export class ReactNativeGenerator extends BaseGenerator {
     };
   }
 
-  private generateComponent(node: DesignNode, name: string, score: number): string {
-    const emitter = new ReactNativeFidelityEmitter();
+  private generateCompoundComponent(
+    node: DesignNode,
+    name: string,
+    emitter: ReactNativeFidelityEmitter,
+    registry: ComponentRegistry,
+    imports: string[],
+  ): string {
+    emitter.setRegistry(registry);
     emitter.styleEntries.set('root', {
       flex: 1,
       ...(node.style.backgroundColor?.hex ? { backgroundColor: node.style.backgroundColor.hex } : {}),
     });
-    const body = emitter.renderJSX(node, 4);
+    const body = emitter.renderJSX(node, 4, registry);
     const styleSheet = emitter.toStyleSheet();
+    const importBlock = imports.length > 0 ? `${imports.join('\n')}\n` : '';
 
-    return `import { View, Text, Pressable, StyleSheet } from 'react-native';
+    return `${importBlock}import { View, Text, Pressable, StyleSheet } from 'react-native';
 
 export interface ${name}Props {
   testID?: string;
 }
 
-/** Pixel-perfect component — Figma fidelity ${score}% */
+/** Compound component — composes reusable sub-components (Figma fidelity FIGMA_FIDELITY_SCORE%) */
 export function ${name}({ testID }: ${name}Props) {
   return (
     <View style={styles.root} testID={testID}>
@@ -89,7 +119,7 @@ ${styleSheet}
     return [
       this.createFile(
         `src/features/${kebab}/screens/${name}Screen.tsx`,
-        `import { View, Text, Pressable, StyleSheet } from 'react-native';\n\nexport function ${name}Screen() {\n  return (\n    <View style={styles.screen}>\n${body}\n    </View>\n  );\n}\n\n${styleSheet}\n`,
+        `import { View, StyleSheet } from 'react-native';\n\nexport function ${name}Screen() {\n  return (\n    <View style={styles.screen}>\n${body}\n    </View>\n  );\n}\n\n${styleSheet}\n`,
         'typescript',
         'feature',
       ),

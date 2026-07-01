@@ -1,26 +1,40 @@
 import type { DesignNode } from '@design2code/design-ast';
-import { FlutterFidelityEmitter } from '@design2code/generator-sdk';
+import { FlutterFidelityEmitter, type ComponentRegistry } from '@design2code/generator-sdk';
 import type { DesignTokenSet } from '@design2code/design-ast';
 
 export class FlutterWidgetRenderer {
   private emitter: FlutterFidelityEmitter;
+  private readonly tokenSet: DesignTokenSet;
 
   constructor(tokenSet: DesignTokenSet) {
+    this.tokenSet = tokenSet;
     this.emitter = new FlutterFidelityEmitter(tokenSet);
   }
 
-  renderWidget(node: DesignNode, className: string): string {
-    const body = this.emitter.renderNode(node, 4);
+  createEmitter(): FlutterFidelityEmitter {
+    return new FlutterFidelityEmitter(this.tokenSet);
+  }
+
+  renderWidget(
+    node: DesignNode,
+    className: string,
+    emitter: FlutterFidelityEmitter,
+    registry?: ComponentRegistry,
+    imports: string[] = [],
+  ): string {
+    emitter.setRegistry(registry);
+    const body = emitter.renderNode(node, 4, registry);
     const props = this.buildProps(node);
     const fields = this.buildFields(node);
+    const importBlock = imports.length > 0 ? `${imports.join('\n')}\n` : '';
 
     return `import 'package:flutter/material.dart';
 import 'package:design2code_app/core/theme/app_colors.dart';
 import 'package:design2code_app/core/theme/app_spacing.dart';
 import 'package:design2code_app/core/theme/app_radius.dart';
 import 'package:design2code_app/core/theme/app_typography.dart';
-
-/// Pixel-perfect widget generated from Figma design
+${importBlock}
+/// Compound widget — composes reusable sub-components from Figma design
 class ${className} extends StatelessWidget {
   const ${className}({
     super.key,

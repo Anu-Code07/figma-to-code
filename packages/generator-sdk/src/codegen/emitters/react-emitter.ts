@@ -6,13 +6,26 @@ import {
   formatShadow,
 } from '../figma-fidelity.js';
 import { escapeHtml, escapeTs } from '../escape.js';
+import type { ComponentRegistry } from '../compound-plan.js';
 
 /** Emits pixel-perfect React/Next.js JSX with inline styles from Figma AST */
 export class ReactFidelityEmitter {
   private fidelity = new FigmaFidelityEngine();
+  private registry?: ComponentRegistry;
 
-  renderJSX(node: DesignNode, indent: number): string {
+  setRegistry(registry: ComponentRegistry | undefined): void {
+    this.registry = registry;
+  }
+
+  renderJSX(node: DesignNode, indent: number, registry?: ComponentRegistry): string {
+    const activeRegistry = registry ?? this.registry;
     const pad = '  '.repeat(indent);
+
+    if (activeRegistry?.shouldReference(node.id)) {
+      const name = activeRegistry.getComponentName(node.id);
+      return `${pad}<${name} />`;
+    }
+
     const s = this.fidelity.compute(node);
     const style = this.styleObject(s);
 
@@ -28,7 +41,7 @@ export class ReactFidelityEmitter {
     }
 
     if (node.layout.mode === 'horizontal' || node.layout.mode === 'vertical') {
-      const children = node.children.map((c) => this.renderJSX(c, indent + 1)).join('\n');
+      const children = node.children.map((c) => this.renderJSX(c, indent + 1, activeRegistry)).join('\n');
       return `${pad}<div style={${style}}>\n${children}\n${pad}</div>`;
     }
 
@@ -36,7 +49,7 @@ export class ReactFidelityEmitter {
       return `${pad}<div style={${style}} />`;
     }
 
-    const children = node.children.map((c) => this.renderJSX(c, indent + 1)).join('\n');
+    const children = node.children.map((c) => this.renderJSX(c, indent + 1, activeRegistry)).join('\n');
     return `${pad}<div style={${style}}>\n${children}\n${pad}</div>`;
   }
 
@@ -115,10 +128,22 @@ type RNStyleValue = string | number | { width: number; height: number };
 export class ReactNativeFidelityEmitter {
   private fidelity = new FigmaFidelityEngine();
   private styleCounter = 0;
+  private registry?: ComponentRegistry;
   readonly styleEntries = new Map<string, Record<string, RNStyleValue>>();
 
-  renderJSX(node: DesignNode, indent: number): string {
+  setRegistry(registry: ComponentRegistry | undefined): void {
+    this.registry = registry;
+  }
+
+  renderJSX(node: DesignNode, indent: number, registry?: ComponentRegistry): string {
+    const activeRegistry = registry ?? this.registry;
     const pad = '  '.repeat(indent);
+
+    if (activeRegistry?.shouldReference(node.id)) {
+      const name = activeRegistry.getComponentName(node.id);
+      return `${pad}<${name} />`;
+    }
+
     const styleKey = this.registerStyle(node);
 
     if (node.semanticType === 'button') {
@@ -135,7 +160,7 @@ ${pad}</Pressable>`;
     }
 
     if (node.layout.mode === 'horizontal' || node.layout.mode === 'vertical') {
-      const children = node.children.map((c) => this.renderJSX(c, indent + 1)).join('\n');
+      const children = node.children.map((c) => this.renderJSX(c, indent + 1, activeRegistry)).join('\n');
       return `${pad}<View style={styles.${styleKey}}>\n${children}\n${pad}</View>`;
     }
 
@@ -143,7 +168,7 @@ ${pad}</Pressable>`;
       return `${pad}<View style={styles.${styleKey}} />`;
     }
 
-    const children = node.children.map((c) => this.renderJSX(c, indent + 1)).join('\n');
+    const children = node.children.map((c) => this.renderJSX(c, indent + 1, activeRegistry)).join('\n');
     return `${pad}<View style={styles.${styleKey}}>\n${children}\n${pad}</View>`;
   }
 
