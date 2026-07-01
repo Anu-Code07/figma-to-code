@@ -27,8 +27,8 @@ export class ComponentDetector {
           type: detection.type,
           name: this.sanitizeComponentName(node.name, detection.type),
           nodeId: node.id,
-          confidence: detection.confidence,
-          reusable: detection.confidence >= 0.8,
+          confidence: node.type === 'instance' ? 0.95 : detection.confidence,
+          reusable: node.type === 'instance' || detection.confidence >= 0.8,
         });
       }
 

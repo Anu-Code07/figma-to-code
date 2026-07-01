@@ -87,7 +87,7 @@ export class AIEngine {
     const signatures = new Map<string, DesignNode[]>();
 
     walkAST(root, (node) => {
-      if (node.type === 'component' || node.semanticType) {
+      if (node.type === 'component' || node.type === 'instance' || node.semanticType) {
         const sig = this.nodeSignature(node);
         const existing = signatures.get(sig) ?? [];
         existing.push(node);

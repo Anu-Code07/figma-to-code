@@ -23,6 +23,16 @@ export class FigmaParser {
 
     const document = builder.build();
     document.tokens = extractTokens(document);
+
+    if (figmaFile.components) {
+      document.metadata.figmaComponents = Object.fromEntries(
+        Object.entries(figmaFile.components).map(([id, meta]) => [
+          id,
+          { name: meta.name, description: meta.description },
+        ]),
+      );
+    }
+
     return document;
   }
 
@@ -95,6 +105,13 @@ export class FigmaParser {
         .filter((c) => c.visible !== false)
         .map((c) => this.convertNode(c)),
     });
+
+    if (figmaNode.type === 'INSTANCE' && figmaNode.componentId) {
+      node.metadata = {
+        ...node.metadata,
+        componentId: figmaNode.componentId,
+      };
+    }
 
     return node;
   }

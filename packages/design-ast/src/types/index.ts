@@ -98,6 +98,8 @@ export interface DesignMetadata {
   componentCount: number;
   source: 'figma' | 'screenshot' | 'design-md' | 'manual';
   aiSuggestions?: string[];
+  /** Figma master component metadata keyed by componentId */
+  figmaComponents?: Record<string, { name: string; description?: string }>;
 }
 
 export interface DetectedComponentRef {

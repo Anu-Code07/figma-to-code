@@ -7,6 +7,7 @@ import {
   FigmaFidelityEngine,
   type ComponentRegistry,
   type CompoundEmitter,
+  type CompoundPlan,
 } from '@design2code/generator-sdk';
 import { generateReactNativeTheme } from '@design2code/design-token-engine';
 
@@ -22,24 +23,13 @@ export class ReactNativeGenerator extends BaseGenerator {
     const theme = generateReactNativeTheme(context.document.tokens);
     files.push(this.createFile(theme.path, theme.content, 'typescript', 'token'));
 
-    const hooks = reactFamilyCompoundHooks(
-      (node, name, emitter, registry, imports, _isRoot) =>
-        this.generateCompoundComponent(
-          node,
-          name,
-          emitter as ReactNativeFidelityEmitter,
-          registry,
-          imports,
-        ),
-      () => new ReactNativeFidelityEmitter() as CompoundEmitter,
-      (rootName) => `src/components/${this.toKebabCase(rootName)}`,
-      (plan) => `src/components/${plan.rootName}/${plan.rootName}.tsx`,
-    );
+    const isFeatureScope = context.options.scope === 'feature';
+    const hooks = this.createHooks(isFeatureScope);
 
     for (const node of nodes) {
       const score = fidelity.fidelityScore(node);
       const kind = context.options.scope === 'screen' ? 'screen' : 'component';
-      const { files: compoundFiles } = generateCompoundFiles(
+      const { files: compoundFiles, plan } = generateCompoundFiles(
         node,
         context,
         (path, content, language) =>
@@ -47,15 +37,15 @@ export class ReactNativeGenerator extends BaseGenerator {
             path,
             content.replace('FIGMA_FIDELITY_SCORE', String(score)),
             language,
-            kind,
+            isFeatureScope ? 'feature' : kind,
           ),
         hooks,
       );
       files.push(...compoundFiles);
-    }
 
-    if (context.options.scope === 'feature') {
-      files.push(...this.generateFeatureFiles(context));
+      if (isFeatureScope) {
+        files.push(...this.generateFeatureFiles(context, plan));
+      }
     }
 
     if (context.options.scope === 'project') {
@@ -72,6 +62,28 @@ export class ReactNativeGenerator extends BaseGenerator {
       warnings: [],
       metadata: { framework: 'react-native', nodeCount: nodes.length, figmaFidelity: avgFidelity },
     };
+  }
+
+  private createHooks(isFeatureScope: boolean) {
+    return reactFamilyCompoundHooks(
+      (node, name, emitter, registry, imports, _isRoot) =>
+        this.generateCompoundComponent(
+          node,
+          name,
+          emitter as ReactNativeFidelityEmitter,
+          registry,
+          imports,
+        ),
+      () => new ReactNativeFidelityEmitter() as CompoundEmitter,
+      (rootName, ctx) =>
+        isFeatureScope
+          ? `src/features/${this.toKebabCase(ctx.document.name)}/components/${this.toKebabCase(rootName)}`
+          : `src/components/${this.toKebabCase(rootName)}`,
+      (plan, ctx) =>
+        isFeatureScope
+          ? `src/features/${this.toKebabCase(ctx.document.name)}/components/${plan.rootName}/${plan.rootName}.tsx`
+          : `src/components/${plan.rootName}/${plan.rootName}.tsx`,
+    );
   }
 
   private generateCompoundComponent(
@@ -109,17 +121,15 @@ ${styleSheet}
 `;
   }
 
-  private generateFeatureFiles(context: GeneratorContext): GeneratedFile[] {
+  private generateFeatureFiles(context: GeneratorContext, plan: CompoundPlan): GeneratedFile[] {
     const name = this.toPascalCase(context.document.name);
     const kebab = this.toKebabCase(context.document.name);
-    const emitter = new ReactNativeFidelityEmitter();
-    const body = emitter.renderJSX(context.document.root, 4);
-    const styleSheet = emitter.toStyleSheet();
+    const compoundKebab = this.toKebabCase(plan.rootName);
 
     return [
       this.createFile(
         `src/features/${kebab}/screens/${name}Screen.tsx`,
-        `import { View, StyleSheet } from 'react-native';\n\nexport function ${name}Screen() {\n  return (\n    <View style={styles.screen}>\n${body}\n    </View>\n  );\n}\n\n${styleSheet}\n`,
+        `import { View, StyleSheet } from 'react-native';\nimport { ${plan.rootName} } from '../components/${compoundKebab}';\n\nexport function ${name}Screen() {\n  return (\n    <View style={styles.screen}>\n      <${plan.rootName} />\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  screen: { flex: 1 },\n});\n`,
         'typescript',
         'feature',
       ),

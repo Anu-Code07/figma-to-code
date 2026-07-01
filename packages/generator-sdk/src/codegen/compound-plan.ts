@@ -21,11 +21,13 @@ const EXTRACTABLE_SEMANTICS = new Set([
 
 export interface ExtractedComponent {
   nodeId: string;
+  canonicalNodeId: string;
   name: string;
   fileName: string;
   node: DesignNode;
   semanticType?: string;
   depth: number;
+  componentId?: string;
 }
 
 export interface CompoundPlan {
@@ -33,17 +35,40 @@ export interface CompoundPlan {
   rootName: string;
   rootFileName: string;
   components: ExtractedComponent[];
+  /** Maps duplicate instance node ids to canonical component node ids */
+  aliases: Record<string, string>;
+}
+
+interface CandidateNode {
+  node: DesignNode;
+  depth: number;
+  ref?: DetectedComponentRef;
 }
 
 /** Tracks which AST nodes are emitted as separate compound sub-components */
 export class ComponentRegistry {
   private readonly extracted = new Map<string, ExtractedComponent>();
+  private readonly aliases = new Map<string, string>();
   private generatingNodeId: string | null = null;
 
   constructor(plan: CompoundPlan) {
     for (const component of plan.components) {
-      this.extracted.set(component.nodeId, component);
+      this.extracted.set(component.canonicalNodeId, component);
+      this.registerAlias(component.nodeId, component.canonicalNodeId);
     }
+    for (const [aliasId, canonicalId] of Object.entries(plan.aliases)) {
+      this.registerAlias(aliasId, canonicalId);
+    }
+  }
+
+  registerAlias(nodeId: string, canonicalNodeId: string): void {
+    if (nodeId !== canonicalNodeId) {
+      this.aliases.set(nodeId, canonicalNodeId);
+    }
+  }
+
+  resolveNodeId(nodeId: string): string {
+    return this.aliases.get(nodeId) ?? nodeId;
   }
 
   setGeneratingNodeId(nodeId: string): void {
@@ -55,20 +80,22 @@ export class ComponentRegistry {
   }
 
   isExtracted(nodeId: string): boolean {
-    return this.extracted.has(nodeId);
+    return this.extracted.has(this.resolveNodeId(nodeId));
   }
 
   getExtracted(nodeId: string): ExtractedComponent | undefined {
-    return this.extracted.get(nodeId);
+    return this.extracted.get(this.resolveNodeId(nodeId));
   }
 
   /** True when this node should be referenced instead of inlined */
   shouldReference(nodeId: string): boolean {
-    return this.extracted.has(nodeId) && nodeId !== this.generatingNodeId;
+    const canonical = this.resolveNodeId(nodeId);
+    if (canonical === this.generatingNodeId || nodeId === this.generatingNodeId) return false;
+    return this.extracted.has(canonical);
   }
 
   getComponentName(nodeId: string): string {
-    return this.extracted.get(nodeId)?.name ?? 'UnknownComponent';
+    return this.extracted.get(this.resolveNodeId(nodeId))?.name ?? 'UnknownComponent';
   }
 
   getAll(): ExtractedComponent[] {
@@ -97,31 +124,135 @@ export function toSnakeCase(str: string): string {
   return toKebabCase(str).replace(/-/g, '_');
 }
 
+function buildParentMap(root: DesignNode): Map<string, DesignNode> {
+  const parentMap = new Map<string, DesignNode>();
+  walkAST(root, (node, parent) => {
+    if (parent) parentMap.set(node.id, parent);
+  });
+  return parentMap;
+}
+
+function hasExtractableInstanceAncestor(
+  nodeId: string,
+  rootId: string,
+  parentMap: Map<string, DesignNode>,
+  isExtractable: (node: DesignNode) => boolean,
+): boolean {
+  let current = parentMap.get(nodeId);
+  while (current && current.id !== rootId) {
+    if ((current.type === 'instance' || current.type === 'component') && isExtractable(current)) {
+      return true;
+    }
+    current = parentMap.get(current.id);
+  }
+  return false;
+}
+
+/** Collect import lines only for sub-components referenced when rendering this node */
+export function getReferencedImports(
+  node: DesignNode,
+  registry: ComponentRegistry,
+  plan: CompoundPlan,
+  formatImport: (sub: ExtractedComponent) => string,
+): string[] {
+  const referenced = new Set<string>();
+
+  function walk(current: DesignNode): void {
+    for (const child of current.children) {
+      if (registry.shouldReference(child.id)) {
+        referenced.add(registry.resolveNodeId(child.id));
+      } else {
+        walk(child);
+      }
+    }
+  }
+
+  walk(node);
+
+  return [...referenced]
+    .map((id) => plan.components.find((c) => c.canonicalNodeId === id))
+    .filter((c): c is ExtractedComponent => c !== undefined)
+    .map(formatImport);
+}
+
 /** Build a compound decomposition plan — breaks UI into smaller reusable sub-components */
 export function planCompoundComponents(root: DesignNode, document: DesignDocument): CompoundPlan {
   const componentRefs = new Map<string, DetectedComponentRef>(
     document.components.map((c) => [c.nodeId, c]),
   );
-  const components: ExtractedComponent[] = [];
+  const parentMap = buildParentMap(root);
+  const candidates: CandidateNode[] = [];
+
+  const isExtractable = (node: DesignNode): boolean =>
+    shouldExtractNode(node, componentRefs.get(node.id));
 
   walkAST(root, (node, _parent, depth) => {
     if (node.id === root.id) return;
+    if (hasExtractableInstanceAncestor(node.id, root.id, parentMap, isExtractable)) return;
 
     const ref = componentRefs.get(node.id);
     if (!shouldExtractNode(node, ref)) return;
 
-    const name = toPascalCase(ref?.name ?? node.name);
-    components.push({
+    candidates.push({ node, depth, ref });
+  });
+
+  const components: ExtractedComponent[] = [];
+  const aliases = new Map<string, string>();
+  const byComponentId = new Map<string, ExtractedComponent>();
+  const byCanonicalId = new Map<string, ExtractedComponent>();
+
+  for (const { node, depth, ref } of candidates) {
+    const componentId = node.metadata?.componentId as string | undefined;
+    const duplicateOf = node.metadata?.duplicateOf as string | undefined;
+
+    if (componentId && byComponentId.has(componentId)) {
+      const canonical = byComponentId.get(componentId)!;
+      aliases.set(node.id, canonical.canonicalNodeId);
+      continue;
+    }
+
+    if (duplicateOf && (byCanonicalId.has(duplicateOf) || aliases.has(duplicateOf))) {
+      const canonicalId = byCanonicalId.has(duplicateOf)
+        ? duplicateOf
+        : aliases.get(duplicateOf)!;
+      const canonical = byCanonicalId.get(canonicalId);
+      if (canonical) {
+        aliases.set(node.id, canonical.canonicalNodeId);
+        continue;
+      }
+    }
+
+    const name = resolveComponentName(node, ref, componentId, byComponentId, document);
+    const extracted: ExtractedComponent = {
       nodeId: node.id,
+      canonicalNodeId: node.id,
       name,
       fileName: toKebabCase(name),
       node,
       semanticType: node.semanticType,
       depth,
-    });
-  });
+      componentId,
+    };
 
-  // Deepest nodes first so nested compounds generate before parents that reference them
+    components.push(extracted);
+    byCanonicalId.set(extracted.canonicalNodeId, extracted);
+    if (componentId) byComponentId.set(componentId, extracted);
+  }
+
+  // Link AI-detected structural duplicates to canonical components
+  for (const { node } of candidates) {
+    if (aliases.has(node.id)) continue;
+    const duplicateOf = node.metadata?.duplicateOf as string | undefined;
+    if (!duplicateOf) continue;
+
+    const canonicalId = aliases.get(duplicateOf) ?? duplicateOf;
+    if (!byCanonicalId.has(canonicalId) || node.id === canonicalId) continue;
+
+    aliases.set(node.id, canonicalId);
+    const removeIdx = components.findIndex((c) => c.nodeId === node.id);
+    if (removeIdx >= 0) components.splice(removeIdx, 1);
+  }
+
   components.sort((a, b) => b.depth - a.depth);
 
   const rootName = toPascalCase(root.name);
@@ -130,7 +261,25 @@ export function planCompoundComponents(root: DesignNode, document: DesignDocumen
     rootName,
     rootFileName: toKebabCase(rootName),
     components,
+    aliases: Object.fromEntries(aliases),
   };
+}
+
+function resolveComponentName(
+  node: DesignNode,
+  ref: DetectedComponentRef | undefined,
+  componentId: string | undefined,
+  byComponentId: Map<string, ExtractedComponent>,
+  document: DesignDocument,
+): string {
+  if (componentId && byComponentId.has(componentId)) {
+    return byComponentId.get(componentId)!.name;
+  }
+
+  const figmaComponentName = document.metadata.figmaComponents?.[componentId ?? '']?.name;
+  if (figmaComponentName) return toPascalCase(figmaComponentName);
+
+  return toPascalCase(ref?.name ?? node.name);
 }
 
 function shouldExtractNode(node: DesignNode, ref?: DetectedComponentRef): boolean {
@@ -141,7 +290,6 @@ function shouldExtractNode(node: DesignNode, ref?: DetectedComponentRef): boolea
   if (node.metadata?.isReusable === true) return true;
   if (node.semanticType && EXTRACTABLE_SEMANTICS.has(node.semanticType)) return true;
 
-  // Compound container: layout frame with multiple meaningful children
   if (
     node.children.length >= 2 &&
     (node.semanticType === 'card' ||
@@ -164,7 +312,10 @@ export function renderReactCompoundBarrel(
     return `export { ${rootName} } from './${rootName}';\n`;
   }
 
-  const reExports = [`export { ${rootName} } from './${rootName}';`, ...subComponents.map((c) => `export { ${c.name} } from './${c.name}';`)].join('\n');
+  const reExports = [
+    `export { ${rootName} } from './${rootName}';`,
+    ...subComponents.map((c) => `export { ${c.name} } from './${c.name}';`),
+  ].join('\n');
   const slots = subComponents
     .map((c) => {
       const slot = c.semanticType

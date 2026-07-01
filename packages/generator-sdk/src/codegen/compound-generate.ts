@@ -5,6 +5,7 @@ import {
   type ExtractedComponent,
   ComponentRegistry,
   planCompoundComponents,
+  getReferencedImports,
   renderFlutterCompoundBarrel,
   renderReactCompoundBarrel,
   toKebabCase,
@@ -34,35 +35,34 @@ export function generateCompoundFiles(
   const registry = new ComponentRegistry(plan);
   const files: GeneratedFile[] = [];
 
-  // Single component with no extractable children — flat file, no folder
   if (plan.components.length === 0) {
     registry.setGeneratingNodeId(root.id);
     const emitter = hooks.createEmitter(context);
     emitter.setRegistry(registry);
     const content = hooks.renderComponent(root, plan.rootName, emitter, registry, [], true);
-    const path = hooks.getFlatPath(plan, context);
-    files.push(createFile(path, content, hooks.language, hooks.rootKind));
+    files.push(createFile(hooks.getFlatPath(plan, context), content, hooks.language, hooks.rootKind));
     registry.clearGeneratingNodeId();
     return { files, plan };
   }
 
   const baseDir = hooks.getBaseDir(plan.rootName, context);
 
-  // Sub-components first (deepest first — already sorted in plan)
   for (const sub of plan.components) {
-    registry.setGeneratingNodeId(sub.nodeId);
+    registry.setGeneratingNodeId(sub.canonicalNodeId);
     const subEmitter = hooks.createEmitter(context);
     subEmitter.setRegistry(registry);
-    const content = hooks.renderComponent(sub.node, sub.name, subEmitter, registry, [], false);
+    const imports = getReferencedImports(sub.node, registry, plan, (c) =>
+      hooks.formatImport(c, baseDir, context),
+    );
+    const content = hooks.renderComponent(sub.node, sub.name, subEmitter, registry, imports, false);
     files.push(createFile(hooks.getSubPath(baseDir, sub), content, hooks.language, hooks.subKind));
   }
 
-  // Root parent composes sub-components
   registry.setGeneratingNodeId(root.id);
   const rootEmitter = hooks.createEmitter(context);
   rootEmitter.setRegistry(registry);
-  const rootImports = plan.components.map(
-    (c) => hooks.formatImport(c, baseDir, context),
+  const rootImports = getReferencedImports(root, registry, plan, (c) =>
+    hooks.formatImport(c, baseDir, context),
   );
   const rootContent = hooks.renderComponent(root, plan.rootName, rootEmitter, registry, rootImports, true);
   files.push(createFile(hooks.getRootPath(baseDir, plan), rootContent, hooks.language, hooks.rootKind));
@@ -112,13 +112,21 @@ export function flutterCompoundHooks(
     imports: string[],
   ) => string,
   createEmitter: (context: GeneratorContext) => CompoundEmitter,
+  options?: { baseDir?: (rootName: string, context: GeneratorContext) => string; flatDir?: (plan: CompoundPlan, context: GeneratorContext) => string },
 ): CompoundFrameworkHooks {
+  const baseDirFn =
+    options?.baseDir ??
+    ((rootName) => `lib/shared/widgets/${toSnakeCase(rootName)}`);
+  const flatDirFn =
+    options?.flatDir ??
+    ((plan) => `lib/shared/widgets/${toSnakeCase(plan.rootName)}.dart`);
+
   return {
     language: 'dart',
     rootKind: 'component',
     subKind: 'component',
-    getFlatPath: (plan) => `lib/shared/widgets/${toSnakeCase(plan.rootName)}.dart`,
-    getBaseDir: (rootName) => `lib/shared/widgets/${toSnakeCase(rootName)}`,
+    getFlatPath: flatDirFn,
+    getBaseDir: baseDirFn,
     getRootPath: (baseDir, plan) => `${baseDir}/${toSnakeCase(plan.rootName)}.dart`,
     getSubPath: (baseDir, sub) => `${baseDir}/${toSnakeCase(sub.name)}.dart`,
     getBarrelPath: (baseDir) => `${baseDir}/widgets.dart`,
@@ -160,4 +168,4 @@ export function reactFamilyCompoundHooks(
   };
 }
 
-export { planCompoundComponents, ComponentRegistry, toKebabCase, toSnakeCase };
+export { planCompoundComponents, ComponentRegistry, toKebabCase, toSnakeCase, getReferencedImports };

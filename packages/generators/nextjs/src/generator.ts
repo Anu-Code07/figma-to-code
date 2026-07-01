@@ -7,6 +7,7 @@ import {
   FigmaFidelityEngine,
   type ComponentRegistry,
   type CompoundEmitter,
+  type CompoundPlan,
 } from '@design2code/generator-sdk';
 import { generateCSSVariables } from '@design2code/design-token-engine';
 
@@ -18,7 +19,6 @@ export class NextjsGenerator extends BaseGenerator {
     const files: GeneratedFile[] = [];
     const nodes = this.filterNodesByScope(context);
     const fidelity = new FigmaFidelityEngine();
-    const emitter = new ReactFidelityEmitter();
 
     const css = generateCSSVariables(context.document.tokens);
     files.push(this.createFile(css.path, css.content, 'css', 'token'));
@@ -36,19 +36,18 @@ button { cursor: pointer; border: none; font: inherit; }
       ),
     );
 
-    if (context.options.scope === 'component' || context.options.scope === 'screen') {
-      const hooks = reactFamilyCompoundHooks(
-        (node, name, emitter, registry, imports, _isRoot) =>
-          this.generateCompoundComponent(node, name, emitter as ReactFidelityEmitter, registry, imports),
-        () => new ReactFidelityEmitter() as CompoundEmitter,
-        (rootName) => `src/components/${this.toKebabCase(rootName)}`,
-        (plan) => `src/components/${plan.rootName}.tsx`,
-      );
+    const isFeatureScope = context.options.scope === 'feature';
+    const isCompoundScope =
+      context.options.scope === 'component' ||
+      context.options.scope === 'screen' ||
+      isFeatureScope;
+
+    if (isCompoundScope) {
+      const hooks = this.createHooks(isFeatureScope);
 
       for (const node of nodes) {
-        const fidelity = new FigmaFidelityEngine();
         const score = fidelity.fidelityScore(node);
-        const { files: compoundFiles } = generateCompoundFiles(
+        const { files: compoundFiles, plan } = generateCompoundFiles(
           node,
           context,
           (path, content, language, _kind) =>
@@ -56,7 +55,7 @@ button { cursor: pointer; border: none; font: inherit; }
               path,
               content.replace('FIGMA_FIDELITY_SCORE', String(score)),
               language,
-              context.options.scope === 'component' ? 'component' : 'screen',
+              isFeatureScope ? 'feature' : context.options.scope === 'component' ? 'component' : 'screen',
             ),
           hooks,
         );
@@ -65,23 +64,20 @@ button { cursor: pointer; border: none; font: inherit; }
         if (context.options.scope === 'screen') {
           const pageName = this.toPascalCase(node.name);
           const kebab = this.toKebabCase(node.name);
-          const pageFile = compoundFiles.find((f) => f.path.endsWith(`${pageName}.tsx`));
-          if (pageFile) {
-            files.push(
-              this.createFile(
-                `src/app/${kebab}/page.tsx`,
-                this.wrapAsNextPage(pageName, pageFile.path, score),
-                'typescript',
-                'screen',
-              ),
-            );
-          }
+          files.push(
+            this.createFile(
+              `src/app/${kebab}/page.tsx`,
+              this.wrapAsNextPage(pageName, kebab, score),
+              'typescript',
+              'screen',
+            ),
+          );
+        }
+
+        if (isFeatureScope) {
+          files.push(...this.generateFeatureModule(context, plan));
         }
       }
-    }
-
-    if (context.options.scope === 'feature') {
-      files.push(...this.generateFeatureModule(context, emitter));
     }
 
     if (context.options.scope === 'project') {
@@ -95,9 +91,28 @@ button { cursor: pointer; border: none; font: inherit; }
 
     return {
       files,
-      warnings: avgFidelity < 70 ? ['Some nodes have incomplete Figma data — enable AI enhancement for better fidelity'] : [],
+      warnings:
+        avgFidelity < 70
+          ? ['Some nodes have incomplete Figma data — enable AI enhancement for better fidelity']
+          : [],
       metadata: { framework: 'nextjs', nodeCount: nodes.length, figmaFidelity: avgFidelity },
     };
+  }
+
+  private createHooks(isFeatureScope: boolean) {
+    return reactFamilyCompoundHooks(
+      (node, name, emitter, registry, imports, _isRoot) =>
+        this.generateCompoundComponent(node, name, emitter as ReactFidelityEmitter, registry, imports),
+      () => new ReactFidelityEmitter() as CompoundEmitter,
+      (rootName, ctx) =>
+        isFeatureScope
+          ? `src/features/${this.toKebabCase(ctx.document.name)}/components/${this.toKebabCase(rootName)}`
+          : `src/components/${this.toKebabCase(rootName)}`,
+      (plan, ctx) =>
+        isFeatureScope
+          ? `src/features/${this.toKebabCase(ctx.document.name)}/components/${plan.rootName}.tsx`
+          : `src/components/${plan.rootName}.tsx`,
+    );
   }
 
   private generateCompoundComponent(
@@ -126,8 +141,7 @@ ${body}
 `;
   }
 
-  private wrapAsNextPage(pageName: string, _componentPath: string, score: number): string {
-    const kebab = this.toKebabCase(pageName);
+  private wrapAsNextPage(pageName: string, kebab: string, score: number): string {
     const importPath = `@/components/${kebab}`;
     return `import { ${pageName} } from '${importPath}';
 import type { Metadata } from 'next';
@@ -147,22 +161,15 @@ export default function ${pageName}Page() {
 `;
   }
 
-  private generateFeatureModule(context: GeneratorContext, emitter: ReactFidelityEmitter): GeneratedFile[] {
+  private generateFeatureModule(context: GeneratorContext, plan: CompoundPlan): GeneratedFile[] {
     const name = this.toPascalCase(context.document.name);
     const kebab = this.toKebabCase(context.document.name);
-    const root = context.document.root;
-    const body = emitter.renderJSX(root, 3);
+    const compoundKebab = this.toKebabCase(plan.rootName);
 
     return [
       this.createFile(
-        `src/features/${kebab}/components/${name}View.tsx`,
-        `'use client';\n\nexport function ${name}View() {\n  return (\n    <div>\n${body}\n    </div>\n  );\n}\n`,
-        'typescript',
-        'feature',
-      ),
-      this.createFile(
         `src/app/${kebab}/page.tsx`,
-        `import { ${name}View } from '@/features/${kebab}/components/${name}View';\n\nexport default function ${name}Page() {\n  return <${name}View />;\n}\n`,
+        `import { ${plan.rootName} } from '@/features/${kebab}/components/${compoundKebab}';\n\nexport default function ${name}Page() {\n  return <${plan.rootName} />;\n}\n`,
         'typescript',
         'screen',
       ),

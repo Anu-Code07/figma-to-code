@@ -2,6 +2,12 @@ import type { GeneratedFile } from '@design2code/design-ast';
 import type { GeneratorContext } from '@design2code/generator-sdk';
 import { toPascalCase, toSnakeCase } from './naming.js';
 
+export interface FeatureDesignContent {
+  widgetClassName: string;
+  /** Relative import path under presentation/widgets/ (without .dart) */
+  widgetImportPath: string;
+}
+
 export function generateCoreLayer(): GeneratedFile[] {
   return [
     file(
@@ -90,6 +96,7 @@ final class Error<T> extends Result<T> {
 export function generateFeatureModule(
   context: GeneratorContext,
   createFile: (path: string, content: string, kind: GeneratedFile['kind']) => GeneratedFile,
+  designContent?: FeatureDesignContent,
 ): GeneratedFile[] {
   const featureName = context.document.name;
   const pascal = toPascalCase(featureName);
@@ -428,7 +435,21 @@ class ${pascal}ErrorView extends StatelessWidget {
   files.push(
     createFile(
       `lib/features/${snake}/presentation/widgets/${snake}_body.dart`,
-      `import 'package:flutter/material.dart';
+      designContent
+        ? `import 'package:flutter/material.dart';
+import '${designContent.widgetImportPath}.dart';
+
+/// Figma design content — compound widget tree from design AST
+class ${pascal}Body extends StatelessWidget {
+  const ${pascal}Body({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ${designContent.widgetClassName}();
+  }
+}
+`
+        : `import 'package:flutter/material.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/${snake}_entity.dart';
 
@@ -504,7 +525,7 @@ class _${pascal}View extends StatelessWidget {
         builder: (context, state) {
           return switch (state) {
             ${pascal}Initial() || ${pascal}Loading() => const ${pascal}LoadingView(),
-            ${pascal}Loaded(items: final items) => ${pascal}Body(items: items),
+            ${pascal}Loaded(items: final items) => ${designContent ? `const ${pascal}Body()` : `${pascal}Body(items: items)`},
             ${pascal}Empty() => const Center(child: Text('No items found')),
             ${pascal}Error(message: final msg) => ${pascal}ErrorView(
               message: msg,
