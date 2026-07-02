@@ -259,6 +259,9 @@ importers:
 
   packages/mcp-server:
     dependencies:
+      '@design2code/ai-engine':
+        specifier: workspace:*
+        version: link:../ai-engine
       '@design2code/compiler-core':
         specifier: workspace:*
         version: link:../compiler-core

@@ -12,6 +12,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { createCompiler, parseDesignMd, registerGenerator } from '@design2code/compiler-core';
+import { createMcpHostComplete } from './host-llm.js';
 import { createFigmaClient, parseFigmaFile } from '@design2code/figma-parser';
 import { detectProject } from '@design2code/merge-engine';
 import { FlutterGenerator } from '@design2code/generator-flutter';
@@ -192,6 +193,7 @@ async function handleGenerate(args: unknown) {
   const params = GenerateSchema.parse(args);
   const document = await loadDocument(params);
   const compiler = createCompiler();
+  const hostComplete = createMcpHostComplete(server);
 
   const result = await compiler.compile(document, {
     framework: params.framework as Framework,
@@ -202,6 +204,8 @@ async function handleGenerate(args: unknown) {
     selection: params.selection,
     includeTests: params.includeTests,
     aiEnabled: true,
+    aiProvider: 'host',
+    hostComplete,
     dryRun: params.mergeStrategy === 'preview',
   });
 
@@ -209,6 +213,7 @@ async function handleGenerate(args: unknown) {
     filesGenerated: result.generation.files.length,
     framework: params.framework,
     scope: params.scope,
+    aiMode: 'host-llm',
     warnings: result.generation.warnings,
     files: result.generation.files.map((f) => ({
       path: f.path,

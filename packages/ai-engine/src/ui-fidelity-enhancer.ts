@@ -11,8 +11,7 @@ export interface UIFidelityEnhancerConfig {
  * AI-powered UI fidelity pass — refines layout, spacing, and visual properties
  * to match Figma designs more closely. Requires Claude or OpenAI API key.
  *
- * Used by: CLI (`design2code login --anthropic-key`) and MCP (when Cursor/Claude invokes tools)
- * NOT built into Cursor itself — Design2Code calls the AI API you configure.
+ * Used by: CLI (API key from config / ~/.zshrc / prompt) and MCP (host LLM via sampling)
  */
 export class UIFidelityEnhancer {
   private provider?: AIProvider;

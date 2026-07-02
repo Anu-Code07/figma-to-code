@@ -9,6 +9,7 @@ import { createFigmaClient, parseFigmaFile } from '@design2code/figma-parser';
 import { formatDiffSummary } from '@design2code/merge-engine';
 import type { DesignDocument, Framework, GenerationScope, MergeStrategy } from '@design2code/design-ast';
 import { loadConfig } from './login.js';
+import { resolveAiCredentials } from '../credentials.js';
 
 export const generateCommand = new Command('generate')
   .description('Generate production code from design')
@@ -65,6 +66,8 @@ export const generateCommand = new Command('generate')
           ? join(process.cwd(), 'design.md')
           : undefined;
 
+      const ai = await resolveAiCredentials({ interactive: true, noAi: options.ai === false });
+
       const compiler = createCompiler();
       const result = await compiler.compile(document, {
         framework: options.framework as Framework,
@@ -78,8 +81,8 @@ export const generateCommand = new Command('generate')
         includeTests: options.tests,
         includeStorybook: options.storybook,
         aiEnabled: options.ai !== false,
-        aiProvider: config.anthropicApiKey ? 'claude' : config.openaiApiKey ? 'openai' : 'local',
-        aiApiKey: config.anthropicApiKey ?? config.openaiApiKey,
+        aiProvider: ai.provider,
+        aiApiKey: ai.apiKey,
         dryRun: options.preview,
       });
 

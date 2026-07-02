@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 import { createCompiler } from '@design2code/compiler-core';
 import type { DesignDocument } from '@design2code/design-ast';
 import type { Framework, GenerationScope } from '@design2code/design-ast';
-import { loadConfig } from './login.js';
+import { resolveAiCredentials } from '../credentials.js';
 
 export const previewCommand = new Command('preview')
   .description('Preview generated code without writing files')
@@ -29,7 +29,7 @@ export const previewCommand = new Command('preview')
       }
 
       const document = JSON.parse(await readFile(astPath, 'utf-8')) as DesignDocument;
-      const config = await loadConfig();
+      const ai = await resolveAiCredentials({ interactive: true });
       const compiler = createCompiler();
 
       const result = await compiler.compile(document, {
@@ -39,8 +39,8 @@ export const previewCommand = new Command('preview')
         mergeStrategy: 'preview',
         dryRun: true,
         aiEnabled: true,
-        aiProvider: config.anthropicApiKey ? 'claude' : 'local',
-        aiApiKey: config.anthropicApiKey,
+        aiProvider: ai.provider,
+        aiApiKey: ai.apiKey,
       });
 
       console.log(chalk.bold(`\nPreview: ${result.generation.files.length} files\n`));

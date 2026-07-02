@@ -1,40 +1,26 @@
 import { Command } from 'commander';
-import { writeFile, mkdir, readFile } from 'node:fs/promises';
+import { appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import chalk from 'chalk';
 import { createFigmaClient } from '@design2code/figma-parser';
+import { loadConfig, saveConfig, CONFIG_FILE } from '../config.js';
+import { readShellApiKeys } from '../credentials.js';
 
-const CONFIG_DIR = join(homedir(), '.design2code');
-const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
-
-export interface Design2CodeConfig {
-  figmaToken?: string;
-  anthropicApiKey?: string;
-  openaiApiKey?: string;
-  defaultFramework?: string;
-}
-
-export async function loadConfig(): Promise<Design2CodeConfig> {
-  try {
-    const content = await readFile(CONFIG_FILE, 'utf-8');
-    return JSON.parse(content) as Design2CodeConfig;
-  } catch {
-    return {};
-  }
-}
-
-export async function saveConfig(config: Design2CodeConfig): Promise<void> {
-  await mkdir(CONFIG_DIR, { recursive: true });
-  await writeFile(CONFIG_FILE, JSON.stringify(config, null, 2));
-}
+export { loadConfig, saveConfig, CONFIG_FILE, type Design2CodeConfig } from '../config.js';
 
 export const loginCommand = new Command('login')
   .description('Authenticate with Figma and AI providers')
   .option('--figma-token <token>', 'Figma personal access token')
   .option('--anthropic-key <key>', 'Anthropic API key for Claude')
   .option('--openai-key <key>', 'OpenAI API key')
-  .action(async (options: { figmaToken?: string; anthropicKey?: string; openaiKey?: string }) => {
+  .option('--save-to-zshrc', 'Also append API key export to ~/.zshrc')
+  .action(async (options: {
+    figmaToken?: string;
+    anthropicKey?: string;
+    openaiKey?: string;
+    saveToZshrc?: boolean;
+  }) => {
     const config = await loadConfig();
 
     if (options.figmaToken) {
@@ -51,6 +37,32 @@ export const loginCommand = new Command('login')
     if (options.anthropicKey) config.anthropicApiKey = options.anthropicKey;
     if (options.openaiKey) config.openaiApiKey = options.openaiKey;
 
+    if (options.saveToZshrc) {
+      if (options.anthropicKey) {
+        await appendFile(join(homedir(), '.zshrc'), `\nexport ANTHROPIC_API_KEY="${options.anthropicKey}"\n`);
+        console.log(chalk.green('✓ Anthropic key appended to ~/.zshrc'));
+      }
+      if (options.openaiKey) {
+        await appendFile(join(homedir(), '.zshrc'), `\nexport OPENAI_API_KEY="${options.openaiKey}"\n`);
+        console.log(chalk.green('✓ OpenAI key appended to ~/.zshrc'));
+      }
+    }
+
     await saveConfig(config);
     console.log(chalk.green(`✓ Configuration saved to ${CONFIG_FILE}`));
+    console.log(
+      chalk.dim(
+        'CLI also reads keys from env vars and ~/.zshrc. MCP mode uses Cursor/Claude host LLM — no API key needed.',
+      ),
+    );
   });
+
+export async function loadConfigFromShell(): Promise<import('../config.js').Design2CodeConfig> {
+  const config = await loadConfig();
+  const shell = await readShellApiKeys();
+  return {
+    ...config,
+    anthropicApiKey: config.anthropicApiKey ?? shell.anthropicApiKey,
+    openaiApiKey: config.openaiApiKey ?? shell.openaiApiKey,
+  };
+}

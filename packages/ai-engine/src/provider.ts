@@ -1,4 +1,5 @@
 import type { AIProvider, AICompletionOptions } from './optimizer.js';
+import { HostProvider, type HostCompleteFn } from './host-provider.js';
 
 /** Anthropic Claude provider for AI optimization */
 export class ClaudeProvider implements AIProvider {
@@ -93,10 +94,13 @@ export class LocalProvider implements AIProvider {
 }
 
 export function createProvider(
-  type: 'claude' | 'openai' | 'local',
+  type: 'claude' | 'openai' | 'local' | 'host',
   apiKey?: string,
+  hostComplete?: HostCompleteFn,
 ): AIProvider {
   switch (type) {
+    case 'host':
+      return new HostProvider(hostComplete);
     case 'claude':
       if (!apiKey) throw new Error('Claude API key required');
       return new ClaudeProvider(apiKey);
@@ -107,3 +111,5 @@ export function createProvider(
       return new LocalProvider();
   }
 }
+
+export { HostProvider, createHostProvider, type HostCompleteFn } from './host-provider.js';

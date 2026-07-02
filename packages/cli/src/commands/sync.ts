@@ -6,6 +6,7 @@ import { createCompiler } from '@design2code/compiler-core';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { loadConfig } from './login.js';
+import { resolveAiCredentials } from '../credentials.js';
 import type { Framework, GenerationScope } from '@design2code/design-ast';
 
 export const syncCommand = new Command('sync')
@@ -37,6 +38,8 @@ export const syncCommand = new Command('sync')
         const figmaFile = await client.getFile(options.file);
         const document = parseFigmaFile(figmaFile, { fileKey: options.file });
 
+        const ai = await resolveAiCredentials({ interactive: true });
+
         const compiler = createCompiler();
         const result = await compiler.compile(document, {
           framework: options.framework as Framework,
@@ -45,8 +48,8 @@ export const syncCommand = new Command('sync')
           projectRoot: options.project,
           mergeStrategy: options.project ? 'merge' : 'create',
           aiEnabled: true,
-          aiProvider: config.anthropicApiKey ? 'claude' : 'local',
-          aiApiKey: config.anthropicApiKey ?? config.openaiApiKey,
+          aiProvider: ai.provider,
+          aiApiKey: ai.apiKey,
         });
 
         const outputDir = join(process.cwd(), options.output);

@@ -7,17 +7,17 @@ import type {
 import type { Generator, GeneratorContext } from '@design2code/generator-sdk';
 import { detectComponents } from '@design2code/component-detector';
 import { extractTokens, mergeWithDesignSystem } from '@design2code/design-token-engine';
-import { createAIEngine } from '@design2code/ai-engine';
-import { createProvider } from '@design2code/ai-engine';
-import { createUIFidelityEnhancer } from '@design2code/ai-engine';
+import { createAIEngine, createProvider, createUIFidelityEnhancer, type HostCompleteFn } from '@design2code/ai-engine';
 import { createMergeEngine, detectProject } from '@design2code/merge-engine';
 import type { MergeResult } from '@design2code/merge-engine';
 import { getGenerator } from './registry.js';
 import { parseDesignMd } from './design-md-parser.js';
 
 export interface CompileOptions extends CompilerOptions {
-  aiProvider?: 'claude' | 'openai' | 'local';
+  aiProvider?: 'claude' | 'openai' | 'local' | 'host';
   aiApiKey?: string;
+  /** MCP host LLM callback (Cursor / Claude Desktop sampling) */
+  hostComplete?: HostCompleteFn;
 }
 
 export interface CompileResult {
@@ -45,17 +45,22 @@ export class DesignCompiler {
     // 3. Component detection
     detectComponents(document);
 
-    // 4. AI optimization (rule-based + optional Claude/OpenAI API)
+    // 4. AI optimization (rule-based + optional LLM)
     if (options.aiEnabled !== false) {
       const provider = createProvider(
         options.aiProvider ?? 'local',
         options.aiApiKey ?? process.env.ANTHROPIC_API_KEY ?? process.env.OPENAI_API_KEY,
+        options.hostComplete,
       );
       const aiEngine = createAIEngine({ provider, enabled: true });
       document = await aiEngine.optimize(document);
 
-      // AI UI fidelity pass — pixel-perfect corrections when API key is configured
-      const uiEnhancer = createUIFidelityEnhancer({ provider, enabled: provider.name !== 'local' });
+      const usesLlm =
+        provider.name === 'claude' ||
+        provider.name === 'openai' ||
+        (provider.name === 'host' && options.hostComplete !== undefined);
+
+      const uiEnhancer = createUIFidelityEnhancer({ provider, enabled: usesLlm });
       document = await uiEnhancer.enhance(document);
     }
 
