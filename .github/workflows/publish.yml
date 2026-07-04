@@ -37,13 +37,14 @@ jobs:
           echo "value=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Publishing version: $VERSION"
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
           registry-url: https://registry.npmjs.org
+
+      - run: corepack enable
+      - run: pnpm --version
 
       - name: Verify version is publishable
         run: node scripts/verify-publish-version.mjs "${{ steps.version.outputs.value }}"
