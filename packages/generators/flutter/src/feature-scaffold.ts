@@ -1,5 +1,5 @@
-import type { GeneratedFile } from '@design2code/design-ast';
-import type { GeneratorContext } from '@design2code/generator-sdk';
+import type { GeneratedFile } from '@figma-to-code/design-ast';
+import type { GeneratorContext } from '@figma-to-code/generator-sdk';
 import { toPascalCase, toSnakeCase } from './naming.js';
 
 export interface FeatureDesignContent {

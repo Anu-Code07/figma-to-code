@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import type { DesignSystemConfig } from '@design2code/design-ast';
+import type { DesignSystemConfig } from '@figma-to-code/design-ast';
 
 /**
  * Parses design.md — a markdown file describing the project's design system.

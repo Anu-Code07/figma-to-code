@@ -33,7 +33,7 @@ node scripts/verify-npm-scope.mjs
 echo "Building packages..."
 pnpm build
 
-echo "Publishing @design2code/* packages..."
+echo "Publishing @figma-to-code/* packages..."
 pnpm publish -r --access public --no-git-checks
 
-echo "Done. Verify: npm view @design2code/cli@${VERSION} version"
+echo "Done. Verify: npm view @figma-to-code/cli@${VERSION} version"

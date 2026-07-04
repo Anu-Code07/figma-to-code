@@ -1,5 +1,5 @@
 {
-  "name": "@design2code/mcp-server",
+  "name": "@figma-to-code/mcp-server",
   "version": "0.1.1",
   "description": "MCP server for Claude/Cursor integration with Design2Code AI",
   "type": "module",
@@ -22,15 +22,15 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@design2code/compiler-core": "workspace:*",
-    "@design2code/ai-engine": "workspace:*",
-    "@design2code/design-ast": "workspace:*",
-    "@design2code/figma-parser": "workspace:*",
-    "@design2code/merge-engine": "workspace:*",
-    "@design2code/generator-flutter": "workspace:*",
-    "@design2code/generator-react": "workspace:*",
-    "@design2code/generator-nextjs": "workspace:*",
-    "@design2code/generator-react-native": "workspace:*",
+    "@figma-to-code/compiler-core": "workspace:*",
+    "@figma-to-code/ai-engine": "workspace:*",
+    "@figma-to-code/design-ast": "workspace:*",
+    "@figma-to-code/figma-parser": "workspace:*",
+    "@figma-to-code/merge-engine": "workspace:*",
+    "@figma-to-code/generator-flutter": "workspace:*",
+    "@figma-to-code/generator-react": "workspace:*",
+    "@figma-to-code/generator-nextjs": "workspace:*",
+    "@figma-to-code/generator-react-native": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.6.1",
     "zod": "^3.24.1"
   },

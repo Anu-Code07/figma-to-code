@@ -38,7 +38,7 @@ When you use Design2Code via MCP, **no API key is required**.
   "mcpServers": {
     "design2code": {
       "command": "npx",
-      "args": ["@design2code/mcp-server"]
+      "args": ["@figma-to-code/mcp-server"]
     }
   }
 }

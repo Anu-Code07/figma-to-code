@@ -11,12 +11,12 @@ if (!semverPattern.test(version)) {
   process.exit(1);
 }
 
-const response = await fetch(`https://registry.npmjs.org/@design2code/cli/${version}`, {
+const response = await fetch(`https://registry.npmjs.org/@figma-to-code/cli/${version}`, {
   headers: { accept: 'application/json' },
 });
 
 if (response.ok) {
-  console.error(`@design2code/cli@${version} is already published on npm.`);
+  console.error(`@figma-to-code/cli@${version} is already published on npm.`);
   process.exit(1);
 }
 

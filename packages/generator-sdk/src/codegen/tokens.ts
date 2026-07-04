@@ -1,4 +1,4 @@
-import type { DesignTokenSet } from '@design2code/design-ast';
+import type { DesignTokenSet } from '@figma-to-code/design-ast';
 
 export interface TokenResolverOptions {
   framework: 'flutter' | 'react' | 'nextjs' | 'react-native';

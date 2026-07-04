@@ -3,7 +3,7 @@ import { appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import chalk from 'chalk';
-import { createFigmaClient } from '@design2code/figma-parser';
+import { createFigmaClient } from '@figma-to-code/figma-parser';
 import { loadConfig, saveConfig, CONFIG_FILE } from '../config.js';
 import { readShellApiKeys } from '../credentials.js';
 

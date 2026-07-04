@@ -1,4 +1,4 @@
-import type { DesignNode, SpacingValue, RadiusValue, ShadowValue } from '@design2code/design-ast';
+import type { DesignNode, SpacingValue, RadiusValue, ShadowValue } from '@figma-to-code/design-ast';
 
 /** Pixel-perfect style snapshot extracted from Figma Design AST */
 export interface FigmaComputedStyle {

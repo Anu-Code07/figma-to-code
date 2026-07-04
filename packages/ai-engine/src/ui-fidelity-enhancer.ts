@@ -1,5 +1,5 @@
-import type { DesignDocument, DesignNode } from '@design2code/design-ast';
-import { walkAST } from '@design2code/design-ast';
+import type { DesignDocument, DesignNode } from '@figma-to-code/design-ast';
+import { walkAST } from '@figma-to-code/design-ast';
 import type { AIProvider } from './optimizer.js';
 
 export interface UIFidelityEnhancerConfig {

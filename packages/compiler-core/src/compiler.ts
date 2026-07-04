@@ -3,13 +3,13 @@ import type {
   DesignDocument,
   GenerationResult,
   MergeStrategy,
-} from '@design2code/design-ast';
-import type { Generator, GeneratorContext } from '@design2code/generator-sdk';
-import { detectComponents } from '@design2code/component-detector';
-import { extractTokens, mergeWithDesignSystem } from '@design2code/design-token-engine';
-import { createAIEngine, createProvider, createUIFidelityEnhancer, type HostCompleteFn } from '@design2code/ai-engine';
-import { createMergeEngine, detectProject } from '@design2code/merge-engine';
-import type { MergeResult } from '@design2code/merge-engine';
+} from '@figma-to-code/design-ast';
+import type { Generator, GeneratorContext } from '@figma-to-code/generator-sdk';
+import { detectComponents } from '@figma-to-code/component-detector';
+import { extractTokens, mergeWithDesignSystem } from '@figma-to-code/design-token-engine';
+import { createAIEngine, createProvider, createUIFidelityEnhancer, type HostCompleteFn } from '@figma-to-code/ai-engine';
+import { createMergeEngine, detectProject } from '@figma-to-code/merge-engine';
+import type { MergeResult } from '@figma-to-code/merge-engine';
 import { getGenerator } from './registry.js';
 import { parseDesignMd } from './design-md-parser.js';
 

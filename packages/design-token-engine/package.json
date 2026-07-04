@@ -1,5 +1,5 @@
 {
-  "name": "@design2code/design-token-engine",
+  "name": "@figma-to-code/design-token-engine",
   "version": "0.1.1",
   "description": "Design token extraction and transformation engine",
   "type": "module",
@@ -20,7 +20,7 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@design2code/design-ast": "workspace:*"
+    "@figma-to-code/design-ast": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

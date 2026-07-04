@@ -1,4 +1,4 @@
-import type { ComponentType } from '@design2code/design-ast';
+import type { ComponentType } from '@figma-to-code/design-ast';
 
 export interface DetectionPattern {
   type: ComponentType;

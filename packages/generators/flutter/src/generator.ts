@@ -1,13 +1,13 @@
-import type { GenerationResult, GeneratedFile, DesignNode } from '@design2code/design-ast';
-import { BaseGenerator, type GeneratorContext } from '@design2code/generator-sdk';
+import type { GenerationResult, GeneratedFile, DesignNode } from '@figma-to-code/design-ast';
+import { BaseGenerator, type GeneratorContext } from '@figma-to-code/generator-sdk';
 import {
   generateCompoundFiles,
   flutterCompoundHooks,
   type CompoundEmitter,
   type CompoundPlan,
-} from '@design2code/generator-sdk';
-import type { FlutterFidelityEmitter } from '@design2code/generator-sdk';
-import { generateFlutterThemeFiles } from '@design2code/design-token-engine';
+} from '@figma-to-code/generator-sdk';
+import type { FlutterFidelityEmitter } from '@figma-to-code/generator-sdk';
+import { generateFlutterThemeFiles } from '@figma-to-code/design-token-engine';
 import { FlutterWidgetRenderer } from './widget-renderer.js';
 import {
   generateCoreLayer,

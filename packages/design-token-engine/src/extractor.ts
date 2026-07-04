@@ -2,7 +2,7 @@ import type {
   DesignDocument,
   DesignNode,
   ColorValue,
-} from '@design2code/design-ast';
+} from '@figma-to-code/design-ast';
 import type {
   DesignTokenSet,
   ColorToken,
@@ -10,9 +10,9 @@ import type {
   SpacingToken,
   RadiusToken,
   ShadowToken,
-} from '@design2code/design-ast';
-import { createEmptyTokenSet } from '@design2code/design-ast';
-import { flattenAST } from '@design2code/design-ast';
+} from '@figma-to-code/design-ast';
+import { createEmptyTokenSet } from '@figma-to-code/design-ast';
+import { flattenAST } from '@figma-to-code/design-ast';
 
 const SPACING_SCALE = [0, 2, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96];
 

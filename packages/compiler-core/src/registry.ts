@@ -1,5 +1,5 @@
-import type { Generator } from '@design2code/generator-sdk';
-import type { Framework } from '@design2code/design-ast';
+import type { Generator } from '@figma-to-code/generator-sdk';
+import type { Framework } from '@figma-to-code/design-ast';
 
 const registry = new Map<Framework, Generator>();
 

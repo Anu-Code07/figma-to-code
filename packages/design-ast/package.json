@@ -1,5 +1,5 @@
 {
-  "name": "@design2code/design-ast",
+  "name": "@figma-to-code/design-ast",
   "version": "0.1.1",
   "description": "Intermediate Design AST for Design2Code AI",
   "type": "module",

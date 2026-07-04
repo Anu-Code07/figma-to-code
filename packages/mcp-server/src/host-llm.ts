@@ -1,6 +1,6 @@
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { CreateMessageResult } from '@modelcontextprotocol/sdk/types.js';
-import type { AICompletionOptions, HostCompleteFn } from '@design2code/ai-engine';
+import type { AICompletionOptions, HostCompleteFn } from '@figma-to-code/ai-engine';
 
 function extractSamplingText(result: CreateMessageResult): string {
   const { content } = result;

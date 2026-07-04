@@ -1,9 +1,9 @@
-import type { DesignNode } from '@design2code/design-ast';
+import type { DesignNode } from '@figma-to-code/design-ast';
 import type { FigmaComputedStyle } from '../figma-fidelity.js';
 import { FigmaFidelityEngine } from '../figma-fidelity.js';
 import { TokenResolver } from '../tokens.js';
 import { escapeDart } from '../escape.js';
-import type { DesignTokenSet } from '@design2code/design-ast';
+import type { DesignTokenSet } from '@figma-to-code/design-ast';
 import type { ComponentRegistry } from '../compound-plan.js';
 
 /** Emits pixel-perfect Flutter widget code from Figma AST nodes */

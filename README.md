@@ -45,6 +45,16 @@ Production Code
 ## Quick Start
 
 ```bash
+# Install from npm (after publish)
+npm i -g @figma-to-code/cli
+
+# Or run without installing
+npx @figma-to-code/cli login --figma-token <your-token>
+```
+
+### Development (monorepo)
+
+```bash
 # Install dependencies
 pnpm install
 
@@ -52,22 +62,22 @@ pnpm install
 pnpm build
 
 # Login with Figma
-npx design2code login --figma-token <your-token>
+pnpm exec design2code login --figma-token <your-token>
 
 # Import a Figma file
-npx design2code import --file <figma-file-key>
+pnpm exec design2code import --file <figma-file-key>
 
 # Generate React components
-npx design2code generate --framework react --scope component
+pnpm exec design2code generate --framework react --scope component
 
 # Generate with design system
-npx design2code generate --framework flutter --scope feature --design-system design.md
+pnpm exec design2code generate --framework flutter --scope feature --design-system design.md
 
 # Preview without writing files
-npx design2code generate --framework nextjs --scope screen --preview
+pnpm exec design2code generate --framework nextjs --scope screen --preview
 
 # Merge into existing project
-npx design2code generate --framework react --scope component --merge --project ./
+pnpm exec design2code generate --framework react --scope component --merge --project ./
 ```
 
 ## design.md — Design System Configuration
@@ -104,7 +114,7 @@ Design2Code AI includes an MCP server for direct use in Claude Desktop and Curso
   "mcpServers": {
     "design2code": {
       "command": "npx",
-      "args": ["@design2code/mcp-server"],
+      "args": ["@figma-to-code/mcp-server"],
       "env": {
         "FIGMA_TOKEN": "your-figma-token"
       }

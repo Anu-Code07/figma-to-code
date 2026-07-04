@@ -10,9 +10,9 @@ import {
   generateCSSVariables,
   generateReactNativeTheme,
   mergeWithDesignSystem,
-} from '@design2code/design-token-engine';
-import { parseDesignMd } from '@design2code/compiler-core';
-import type { DesignDocument, Framework } from '@design2code/design-ast';
+} from '@figma-to-code/design-token-engine';
+import { parseDesignMd } from '@figma-to-code/compiler-core';
+import type { DesignDocument, Framework } from '@figma-to-code/design-ast';
 
 export const tokensCommand = new Command('tokens')
   .description('Extract and export design tokens')

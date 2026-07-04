@@ -1,4 +1,4 @@
-import type { DesignNode } from '@design2code/design-ast';
+import type { DesignNode } from '@figma-to-code/design-ast';
 import type { FigmaComputedStyle } from '../figma-fidelity.js';
 import {
   FigmaFidelityEngine,
