@@ -1,8 +1,8 @@
-import { registerGenerator } from '@design2code/compiler-core';
-import { FlutterGenerator } from '@design2code/generator-flutter';
-import { ReactGenerator } from '@design2code/generator-react';
-import { NextjsGenerator } from '@design2code/generator-nextjs';
-import { ReactNativeGenerator } from '@design2code/generator-react-native';
+import { registerGenerator } from '@figma-to-code/compiler-core';
+import { FlutterGenerator } from '@figma-to-code/generator-flutter';
+import { ReactGenerator } from '@figma-to-code/generator-react';
+import { NextjsGenerator } from '@figma-to-code/generator-nextjs';
+import { ReactNativeGenerator } from '@figma-to-code/generator-react-native';
 
 export function registerAllGenerators(): void {
   registerGenerator('flutter', new FlutterGenerator());

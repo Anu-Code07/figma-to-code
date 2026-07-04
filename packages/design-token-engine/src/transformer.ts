@@ -1,6 +1,6 @@
-import type { DesignSystemConfig } from '@design2code/design-ast';
-import type { DesignTokenSet } from '@design2code/design-ast';
-import { createEmptyTokenSet } from '@design2code/design-ast';
+import type { DesignSystemConfig } from '@figma-to-code/design-ast';
+import type { DesignTokenSet } from '@figma-to-code/design-ast';
+import { createEmptyTokenSet } from '@figma-to-code/design-ast';
 
 /**
  * Merges design.md token definitions with extracted Figma tokens.

@@ -1,5 +1,5 @@
-import type { DesignDocument, DesignNode, DetectedComponentRef } from '@design2code/design-ast';
-import { walkAST } from '@design2code/design-ast';
+import type { DesignDocument, DesignNode, DetectedComponentRef } from '@figma-to-code/design-ast';
+import { walkAST } from '@figma-to-code/design-ast';
 
 /** Semantic types that should become standalone compound sub-components */
 const EXTRACTABLE_SEMANTICS = new Set([

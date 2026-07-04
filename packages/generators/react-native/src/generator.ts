@@ -1,5 +1,5 @@
-import type { GenerationResult, DesignNode, GeneratedFile } from '@design2code/design-ast';
-import { BaseGenerator, type GeneratorContext } from '@design2code/generator-sdk';
+import type { GenerationResult, DesignNode, GeneratedFile } from '@figma-to-code/design-ast';
+import { BaseGenerator, type GeneratorContext } from '@figma-to-code/generator-sdk';
 import {
   ReactNativeFidelityEmitter,
   generateCompoundFiles,
@@ -8,8 +8,8 @@ import {
   type ComponentRegistry,
   type CompoundEmitter,
   type CompoundPlan,
-} from '@design2code/generator-sdk';
-import { generateReactNativeTheme } from '@design2code/design-token-engine';
+} from '@figma-to-code/generator-sdk';
+import { generateReactNativeTheme } from '@figma-to-code/design-token-engine';
 
 export class ReactNativeGenerator extends BaseGenerator {
   readonly name = 'react-native';

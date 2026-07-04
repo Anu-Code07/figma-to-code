@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { existsSync } from 'node:fs';
-import type { GeneratedFile, MergeStrategy } from '@design2code/design-ast';
+import type { GeneratedFile, MergeStrategy } from '@figma-to-code/design-ast';
 
 export interface MergeOptions {
   projectRoot: string;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createDesignNode, DesignASTBuilder } from '@design2code/design-ast';
+import { createDesignNode, DesignASTBuilder } from '@figma-to-code/design-ast';
 import { FlutterGenerator } from './generator.js';
 
 describe('FlutterGenerator', () => {

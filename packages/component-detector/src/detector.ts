@@ -4,8 +4,8 @@ import type {
   ComponentType,
   DetectedComponentRef,
   ScreenRef,
-} from '@design2code/design-ast';
-import { walkAST } from '@design2code/design-ast';
+} from '@figma-to-code/design-ast';
+import { walkAST } from '@figma-to-code/design-ast';
 import { DETECTION_PATTERNS, type DetectionPattern } from './patterns.js';
 
 export interface DetectionResult {

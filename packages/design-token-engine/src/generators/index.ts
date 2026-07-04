@@ -1,4 +1,4 @@
-import type { DesignTokenSet } from '@design2code/design-ast';
+import type { DesignTokenSet } from '@figma-to-code/design-ast';
 import { generateFlutterThemeFiles } from './flutter-theme.js';
 
 export interface TokenOutput {

@@ -88,8 +88,8 @@ jobs:
       - name: Summary
         run: |
           VERSION="${{ steps.version.outputs.value }}"
-          echo "## Published @design2code/* v${VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Published @figma-to-code/* v${VERSION}" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "- CLI: \`npm i -g @design2code/cli@${VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- MCP: \`npm i -g @design2code/mcp-server@${VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- CLI: \`npm i -g @figma-to-code/cli@${VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- MCP: \`npm i -g @figma-to-code/mcp-server@${VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Tag: \`v${VERSION}\`" >> "$GITHUB_STEP_SUMMARY"

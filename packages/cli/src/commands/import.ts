@@ -3,8 +3,8 @@ import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import chalk from 'chalk';
 import ora from 'ora';
-import { createFigmaClient } from '@design2code/figma-parser';
-import { parseFigmaFile } from '@design2code/figma-parser';
+import { createFigmaClient } from '@figma-to-code/figma-parser';
+import { parseFigmaFile } from '@figma-to-code/figma-parser';
 import { loadConfig } from './login.js';
 
 export const importCommand = new Command('import')

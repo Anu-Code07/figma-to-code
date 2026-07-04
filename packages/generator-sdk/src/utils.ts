@@ -1,4 +1,4 @@
-import type { DesignNode } from '@design2code/design-ast';
+import type { DesignNode } from '@figma-to-code/design-ast';
 
 export function nodeToTree(node: DesignNode, indent = 0): string {
   const prefix = '  '.repeat(indent);

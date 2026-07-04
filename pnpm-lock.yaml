@@ -35,7 +35,7 @@ importers:
 
   packages/ai-engine:
     dependencies:
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../design-ast
     devDependencies:
@@ -48,31 +48,31 @@ importers:
 
   packages/cli:
     dependencies:
-      '@design2code/compiler-core':
+      '@figma-to-code/compiler-core':
         specifier: workspace:*
         version: link:../compiler-core
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../design-ast
-      '@design2code/design-token-engine':
+      '@figma-to-code/design-token-engine':
         specifier: workspace:*
         version: link:../design-token-engine
-      '@design2code/figma-parser':
+      '@figma-to-code/figma-parser':
         specifier: workspace:*
         version: link:../figma-parser
-      '@design2code/generator-flutter':
+      '@figma-to-code/generator-flutter':
         specifier: workspace:*
         version: link:../generators/flutter
-      '@design2code/generator-nextjs':
+      '@figma-to-code/generator-nextjs':
         specifier: workspace:*
         version: link:../generators/nextjs
-      '@design2code/generator-react':
+      '@figma-to-code/generator-react':
         specifier: workspace:*
         version: link:../generators/react
-      '@design2code/generator-react-native':
+      '@figma-to-code/generator-react-native':
         specifier: workspace:*
         version: link:../generators/react-native
-      '@design2code/merge-engine':
+      '@figma-to-code/merge-engine':
         specifier: workspace:*
         version: link:../merge-engine
       chalk:
@@ -91,25 +91,25 @@ importers:
 
   packages/compiler-core:
     dependencies:
-      '@design2code/ai-engine':
+      '@figma-to-code/ai-engine':
         specifier: workspace:*
         version: link:../ai-engine
-      '@design2code/component-detector':
+      '@figma-to-code/component-detector':
         specifier: workspace:*
         version: link:../component-detector
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../design-ast
-      '@design2code/design-token-engine':
+      '@figma-to-code/design-token-engine':
         specifier: workspace:*
         version: link:../design-token-engine
-      '@design2code/figma-parser':
+      '@figma-to-code/figma-parser':
         specifier: workspace:*
         version: link:../figma-parser
-      '@design2code/generator-sdk':
+      '@figma-to-code/generator-sdk':
         specifier: workspace:*
         version: link:../generator-sdk
-      '@design2code/merge-engine':
+      '@figma-to-code/merge-engine':
         specifier: workspace:*
         version: link:../merge-engine
     devDependencies:
@@ -122,7 +122,7 @@ importers:
 
   packages/component-detector:
     dependencies:
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../design-ast
     devDependencies:
@@ -144,7 +144,7 @@ importers:
 
   packages/design-token-engine:
     dependencies:
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../design-ast
     devDependencies:
@@ -157,10 +157,10 @@ importers:
 
   packages/figma-parser:
     dependencies:
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../design-ast
-      '@design2code/design-token-engine':
+      '@figma-to-code/design-token-engine':
         specifier: workspace:*
         version: link:../design-token-engine
     devDependencies:
@@ -173,7 +173,7 @@ importers:
 
   packages/generator-sdk:
     dependencies:
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../design-ast
     devDependencies:
@@ -183,13 +183,13 @@ importers:
 
   packages/generators/flutter:
     dependencies:
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../../design-ast
-      '@design2code/design-token-engine':
+      '@figma-to-code/design-token-engine':
         specifier: workspace:*
         version: link:../../design-token-engine
-      '@design2code/generator-sdk':
+      '@figma-to-code/generator-sdk':
         specifier: workspace:*
         version: link:../../generator-sdk
     devDependencies:
@@ -202,13 +202,13 @@ importers:
 
   packages/generators/nextjs:
     dependencies:
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../../design-ast
-      '@design2code/design-token-engine':
+      '@figma-to-code/design-token-engine':
         specifier: workspace:*
         version: link:../../design-token-engine
-      '@design2code/generator-sdk':
+      '@figma-to-code/generator-sdk':
         specifier: workspace:*
         version: link:../../generator-sdk
     devDependencies:
@@ -221,13 +221,13 @@ importers:
 
   packages/generators/react:
     dependencies:
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../../design-ast
-      '@design2code/design-token-engine':
+      '@figma-to-code/design-token-engine':
         specifier: workspace:*
         version: link:../../design-token-engine
-      '@design2code/generator-sdk':
+      '@figma-to-code/generator-sdk':
         specifier: workspace:*
         version: link:../../generator-sdk
     devDependencies:
@@ -240,13 +240,13 @@ importers:
 
   packages/generators/react-native:
     dependencies:
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../../design-ast
-      '@design2code/design-token-engine':
+      '@figma-to-code/design-token-engine':
         specifier: workspace:*
         version: link:../../design-token-engine
-      '@design2code/generator-sdk':
+      '@figma-to-code/generator-sdk':
         specifier: workspace:*
         version: link:../../generator-sdk
     devDependencies:
@@ -259,31 +259,31 @@ importers:
 
   packages/mcp-server:
     dependencies:
-      '@design2code/ai-engine':
+      '@figma-to-code/ai-engine':
         specifier: workspace:*
         version: link:../ai-engine
-      '@design2code/compiler-core':
+      '@figma-to-code/compiler-core':
         specifier: workspace:*
         version: link:../compiler-core
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../design-ast
-      '@design2code/figma-parser':
+      '@figma-to-code/figma-parser':
         specifier: workspace:*
         version: link:../figma-parser
-      '@design2code/generator-flutter':
+      '@figma-to-code/generator-flutter':
         specifier: workspace:*
         version: link:../generators/flutter
-      '@design2code/generator-nextjs':
+      '@figma-to-code/generator-nextjs':
         specifier: workspace:*
         version: link:../generators/nextjs
-      '@design2code/generator-react':
+      '@figma-to-code/generator-react':
         specifier: workspace:*
         version: link:../generators/react
-      '@design2code/generator-react-native':
+      '@figma-to-code/generator-react-native':
         specifier: workspace:*
         version: link:../generators/react-native
-      '@design2code/merge-engine':
+      '@figma-to-code/merge-engine':
         specifier: workspace:*
         version: link:../merge-engine
       '@modelcontextprotocol/sdk':
@@ -299,7 +299,7 @@ importers:
 
   packages/merge-engine:
     dependencies:
-      '@design2code/design-ast':
+      '@figma-to-code/design-ast':
         specifier: workspace:*
         version: link:../design-ast
     devDependencies:

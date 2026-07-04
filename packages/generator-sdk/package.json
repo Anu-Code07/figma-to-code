@@ -1,5 +1,5 @@
 {
-  "name": "@design2code/generator-sdk",
+  "name": "@figma-to-code/generator-sdk",
   "version": "0.1.1",
   "description": "Plugin SDK for Design2Code framework generators",
   "type": "module",
@@ -18,7 +18,7 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@design2code/design-ast": "workspace:*"
+    "@figma-to-code/design-ast": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

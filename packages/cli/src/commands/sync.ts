@@ -1,13 +1,13 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
-import { createFigmaClient, parseFigmaFile } from '@design2code/figma-parser';
-import { createCompiler } from '@design2code/compiler-core';
+import { createFigmaClient, parseFigmaFile } from '@figma-to-code/figma-parser';
+import { createCompiler } from '@figma-to-code/compiler-core';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { loadConfig } from './login.js';
 import { resolveAiCredentials } from '../credentials.js';
-import type { Framework, GenerationScope } from '@design2code/design-ast';
+import type { Framework, GenerationScope } from '@figma-to-code/design-ast';
 
 export const syncCommand = new Command('sync')
   .description('Sync Figma file and regenerate code')

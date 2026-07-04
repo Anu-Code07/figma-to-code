@@ -1,4 +1,4 @@
-import type { DesignNode, GeneratedFile } from '@design2code/design-ast';
+import type { DesignNode, GeneratedFile } from '@figma-to-code/design-ast';
 import type { GeneratorContext } from '../index.js';
 import {
   type CompoundPlan,

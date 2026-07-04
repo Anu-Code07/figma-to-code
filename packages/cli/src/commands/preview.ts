@@ -3,9 +3,9 @@ import chalk from 'chalk';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { createCompiler } from '@design2code/compiler-core';
-import type { DesignDocument } from '@design2code/design-ast';
-import type { Framework, GenerationScope } from '@design2code/design-ast';
+import { createCompiler } from '@figma-to-code/compiler-core';
+import type { DesignDocument } from '@figma-to-code/design-ast';
+import type { Framework, GenerationScope } from '@figma-to-code/design-ast';
 import { resolveAiCredentials } from '../credentials.js';
 
 export const previewCommand = new Command('preview')

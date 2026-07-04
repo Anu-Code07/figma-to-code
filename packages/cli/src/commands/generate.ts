@@ -4,10 +4,10 @@ import ora from 'ora';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { createCompiler } from '@design2code/compiler-core';
-import { createFigmaClient, parseFigmaFile } from '@design2code/figma-parser';
-import { formatDiffSummary } from '@design2code/merge-engine';
-import type { DesignDocument, Framework, GenerationScope, MergeStrategy } from '@design2code/design-ast';
+import { createCompiler } from '@figma-to-code/compiler-core';
+import { createFigmaClient, parseFigmaFile } from '@figma-to-code/figma-parser';
+import { formatDiffSummary } from '@figma-to-code/merge-engine';
+import type { DesignDocument, Framework, GenerationScope, MergeStrategy } from '@figma-to-code/design-ast';
 import { loadConfig } from './login.js';
 import { resolveAiCredentials } from '../credentials.js';
 

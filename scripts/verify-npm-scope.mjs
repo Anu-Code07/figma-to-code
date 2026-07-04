@@ -15,20 +15,20 @@ try {
 console.log(`npm user: ${whoami}`);
 
 try {
-  const members = run('npm org ls design2code');
-  console.log('Scope @design2code: access confirmed');
+  const members = run('npm org ls figma-to-code');
+  console.log('Scope @figma-to-code: access confirmed');
   if (members) {
     console.log(members);
   }
 } catch {
   console.error(`
-Cannot publish to @design2code/*.
+Cannot publish to @figma-to-code/*.
 
-npm user "${whoami}" is not an owner of the @design2code organization.
+npm user "${whoami}" is not an owner of the @figma-to-code organization.
 
 To fix:
   1. Open https://www.npmjs.com/org/create
-  2. Create organization: design2code
+  2. Create organization: figma-to-code
   3. Ensure NPM_TOKEN belongs to that org owner (or add the user as owner)
   4. Token type: Automation (recommended for CI) with publish permission
   5. Re-run Actions → Publish → Run workflow

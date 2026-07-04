@@ -1,5 +1,5 @@
 {
-  "name": "@design2code/component-detector",
+  "name": "@figma-to-code/component-detector",
   "version": "0.1.1",
   "description": "Automatic UI component detection from Design AST",
   "type": "module",
@@ -20,7 +20,7 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@design2code/design-ast": "workspace:*"
+    "@figma-to-code/design-ast": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

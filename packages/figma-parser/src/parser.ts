@@ -1,6 +1,6 @@
-import type { DesignDocument, DesignNode } from '@design2code/design-ast';
-import { DesignASTBuilder, createDesignNode } from '@design2code/design-ast';
-import { extractTokens } from '@design2code/design-token-engine';
+import type { DesignDocument, DesignNode } from '@figma-to-code/design-ast';
+import { DesignASTBuilder, createDesignNode } from '@figma-to-code/design-ast';
+import { extractTokens } from '@figma-to-code/design-token-engine';
 import type { FigmaFileResponse, FigmaNode, FigmaFill, FigmaEffect } from './types.js';
 
 export interface ParseOptions {

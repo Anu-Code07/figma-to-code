@@ -1,5 +1,5 @@
 {
-  "name": "@design2code/compiler-core",
+  "name": "@figma-to-code/compiler-core",
   "version": "0.1.1",
   "description": "Core compiler orchestration for Design2Code AI",
   "type": "module",
@@ -20,13 +20,13 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@design2code/design-ast": "workspace:*",
-    "@design2code/design-token-engine": "workspace:*",
-    "@design2code/component-detector": "workspace:*",
-    "@design2code/figma-parser": "workspace:*",
-    "@design2code/ai-engine": "workspace:*",
-    "@design2code/merge-engine": "workspace:*",
-    "@design2code/generator-sdk": "workspace:*"
+    "@figma-to-code/design-ast": "workspace:*",
+    "@figma-to-code/design-token-engine": "workspace:*",
+    "@figma-to-code/component-detector": "workspace:*",
+    "@figma-to-code/figma-parser": "workspace:*",
+    "@figma-to-code/ai-engine": "workspace:*",
+    "@figma-to-code/merge-engine": "workspace:*",
+    "@figma-to-code/generator-sdk": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

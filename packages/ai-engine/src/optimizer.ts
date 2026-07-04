@@ -1,5 +1,5 @@
-import type { DesignDocument, DesignNode } from '@design2code/design-ast';
-import { walkAST, findNodes } from '@design2code/design-ast';
+import type { DesignDocument, DesignNode } from '@figma-to-code/design-ast';
+import { walkAST, findNodes } from '@figma-to-code/design-ast';
 
 export interface AIProvider {
   name: string;

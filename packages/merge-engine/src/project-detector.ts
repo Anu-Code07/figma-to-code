@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Framework, ArchitecturePattern, StateManagement, UILibrary } from '@design2code/design-ast';
+import type { Framework, ArchitecturePattern, StateManagement, UILibrary } from '@figma-to-code/design-ast';
 
 export interface ProjectProfile {
   framework: Framework;

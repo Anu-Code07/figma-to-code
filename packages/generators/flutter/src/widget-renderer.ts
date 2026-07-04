@@ -1,6 +1,6 @@
-import type { DesignNode } from '@design2code/design-ast';
-import { FlutterFidelityEmitter, type ComponentRegistry } from '@design2code/generator-sdk';
-import type { DesignTokenSet } from '@design2code/design-ast';
+import type { DesignNode } from '@figma-to-code/design-ast';
+import { FlutterFidelityEmitter, type ComponentRegistry } from '@figma-to-code/generator-sdk';
+import type { DesignTokenSet } from '@figma-to-code/design-ast';
 
 export class FlutterWidgetRenderer {
   private emitter: FlutterFidelityEmitter;

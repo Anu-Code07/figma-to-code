@@ -5,7 +5,7 @@ import type {
   GeneratedFile,
   GenerationResult,
   DesignSystemConfig,
-} from '@design2code/design-ast';
+} from '@figma-to-code/design-ast';
 
 export interface ProjectProfile {
   framework: string;

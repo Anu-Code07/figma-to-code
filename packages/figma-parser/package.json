@@ -1,5 +1,5 @@
 {
-  "name": "@design2code/figma-parser",
+  "name": "@figma-to-code/figma-parser",
   "version": "0.1.1",
   "description": "Figma file parser to Design AST",
   "type": "module",
@@ -20,8 +20,8 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@design2code/design-ast": "workspace:*",
-    "@design2code/design-token-engine": "workspace:*"
+    "@figma-to-code/design-ast": "workspace:*",
+    "@figma-to-code/design-token-engine": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
