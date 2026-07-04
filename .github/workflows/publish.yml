@@ -75,6 +75,11 @@ jobs:
       - run: pnpm build
       - run: pnpm test
 
+      - name: Verify npm scope access
+        run: node scripts/verify-npm-scope.mjs
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish packages
         run: pnpm publish -r --access public --no-git-checks
         env:
