@@ -1,6 +1,6 @@
 {
   "name": "design2code-ai",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "private": true,
   "description": "AI Design Compiler — transforms Figma designs into production-ready code",
   "license": "MIT",

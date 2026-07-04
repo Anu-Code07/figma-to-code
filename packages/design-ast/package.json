@@ -1,6 +1,6 @@
 {
   "name": "@figma-to-code/design-ast",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "Intermediate Design AST for Design2Code AI",
   "type": "module",
   "main": "./dist/index.js",

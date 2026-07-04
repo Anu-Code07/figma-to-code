@@ -1,6 +1,6 @@
 {
   "name": "@figma-to-code/generator-react-native",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "React Native code generator for Design2Code AI",
   "type": "module",
   "main": "./dist/index.js",
