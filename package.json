@@ -16,7 +16,8 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "publish:packages": "bash scripts/publish-packages.sh"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
