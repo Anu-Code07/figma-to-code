@@ -25,6 +25,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm --version
+
       - name: Resolve version
         id: version
         run: |
@@ -36,15 +46,6 @@ jobs:
           VERSION="${VERSION#v}"
           echo "value=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Publishing version: $VERSION"
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-          registry-url: https://registry.npmjs.org
-
-      - run: corepack enable
-      - run: pnpm --version
 
       - name: Verify version is publishable
         run: node scripts/verify-publish-version.mjs "${{ steps.version.outputs.value }}"
