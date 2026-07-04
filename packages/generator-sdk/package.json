@@ -14,12 +14,41 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
     "@design2code/design-ast": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2"
+  },
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/Anu-Code07/figma-to-code/issues"
+  },
+  "homepage": "https://github.com/Anu-Code07/figma-to-code#readme",
+  "keywords": [
+    "figma",
+    "design-to-code",
+    "codegen",
+    "flutter",
+    "react",
+    "nextjs",
+    "mcp"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anu-Code07/figma-to-code.git",
+    "directory": "packages/generator-sdk"
   }
 }
