@@ -1,6 +1,6 @@
 {
   "name": "@design2code/merge-engine",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Intelligent merge engine for existing projects",
   "type": "module",
   "main": "./dist/index.js",

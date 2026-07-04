@@ -1,6 +1,6 @@
 {
   "name": "@design2code/generator-flutter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Flutter code generator for Design2Code AI",
   "type": "module",
   "main": "./dist/index.js",

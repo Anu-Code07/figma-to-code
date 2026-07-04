@@ -1,6 +1,6 @@
 {
   "name": "@design2code/generator-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Plugin SDK for Design2Code framework generators",
   "type": "module",
   "main": "./dist/index.js",

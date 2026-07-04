@@ -1,6 +1,6 @@
 {
   "name": "@design2code/figma-parser",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Figma file parser to Design AST",
   "type": "module",
   "main": "./dist/index.js",

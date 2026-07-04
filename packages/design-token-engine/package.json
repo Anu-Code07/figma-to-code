@@ -1,6 +1,6 @@
 {
   "name": "@design2code/design-token-engine",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Design token extraction and transformation engine",
   "type": "module",
   "main": "./dist/index.js",

@@ -1,6 +1,6 @@
 {
   "name": "@design2code/component-detector",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Automatic UI component detection from Design AST",
   "type": "module",
   "main": "./dist/index.js",
