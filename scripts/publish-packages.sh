@@ -27,6 +27,9 @@ node scripts/verify-publish-version.mjs "$VERSION"
 echo "Syncing package versions to ${VERSION}..."
 node scripts/sync-package-versions.mjs "$VERSION"
 
+echo "Verifying npm scope access..."
+node scripts/verify-npm-scope.mjs
+
 echo "Building packages..."
 pnpm build
 
