@@ -52,6 +52,8 @@ export interface CompilerOptions {
   outputDir?: string;
   projectRoot?: string;
   selection?: string[];
+  /** Override root widget / feature name (e.g. "PromoBanner" instead of "Page 1") */
+  componentName?: string;
   includeRouting?: boolean;
   includeTests?: boolean;
   includeStorybook?: boolean;
@@ -229,6 +231,19 @@ export interface StyleProperties {
   elevation?: number;
   overflow?: 'visible' | 'hidden' | 'scroll' | 'auto';
   blendMode?: string;
+  gradient?: GradientValue;
+  backgroundImageRef?: string;
+}
+
+export interface GradientStop {
+  offset: number;
+  color: string;
+}
+
+export interface GradientValue {
+  type: 'linear';
+  stops: GradientStop[];
+  angle?: number;
 }
 
 export interface ColorValue {

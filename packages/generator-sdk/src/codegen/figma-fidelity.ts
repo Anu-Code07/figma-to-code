@@ -14,6 +14,8 @@ export interface FigmaComputedStyle {
   justifyContent?: string;
   flexWrap?: boolean;
   backgroundColor?: string;
+  gradient?: import('@figma-to-code/design-ast').GradientValue;
+  backgroundImageRef?: string;
   color?: string;
   borderColor?: string;
   borderWidth?: number;
@@ -71,6 +73,8 @@ export class FigmaFidelityEngine {
     }
 
     // Visual styles
+    if (node.style.gradient) style.gradient = node.style.gradient;
+    if (node.style.backgroundImageRef) style.backgroundImageRef = node.style.backgroundImageRef;
     if (node.style.backgroundColor?.hex) style.backgroundColor = node.style.backgroundColor.hex;
     if (node.style.borderColor?.hex) style.borderColor = node.style.borderColor.hex;
     if (node.style.borderWidth) style.borderWidth = node.style.borderWidth;

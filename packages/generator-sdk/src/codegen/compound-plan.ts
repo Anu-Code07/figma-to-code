@@ -176,7 +176,11 @@ export function getReferencedImports(
 }
 
 /** Build a compound decomposition plan — breaks UI into smaller reusable sub-components */
-export function planCompoundComponents(root: DesignNode, document: DesignDocument): CompoundPlan {
+export function planCompoundComponents(
+  root: DesignNode,
+  document: DesignDocument,
+  options?: { rootName?: string },
+): CompoundPlan {
   const componentRefs = new Map<string, DetectedComponentRef>(
     document.components.map((c) => [c.nodeId, c]),
   );
@@ -255,7 +259,7 @@ export function planCompoundComponents(root: DesignNode, document: DesignDocumen
 
   components.sort((a, b) => b.depth - a.depth);
 
-  const rootName = toPascalCase(root.name);
+  const rootName = options?.rootName ? toPascalCase(options.rootName) : toPascalCase(root.name);
   return {
     root,
     rootName,

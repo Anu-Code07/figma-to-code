@@ -36,16 +36,18 @@ export class FigmaParser {
     return document;
   }
 
-  private convertNode(figmaNode: FigmaNode): DesignNode {
+  private convertNode(figmaNode: FigmaNode, parentBbox?: { x: number; y: number }): DesignNode {
     const type = this.mapNodeType(figmaNode.type);
     const bbox = figmaNode.absoluteBoundingBox;
+    const layoutMode = this.mapLayoutMode(figmaNode.layoutMode);
+    const fills = this.extractFills(figmaNode.fills);
 
     const node = createDesignNode({
       id: figmaNode.id,
       type,
       name: figmaNode.name,
       layout: {
-        mode: this.mapLayoutMode(figmaNode.layoutMode),
+        mode: layoutMode,
         width: bbox ? { kind: 'fixed', value: bbox.width } : { kind: 'hug' },
         height: bbox ? { kind: 'fixed', value: bbox.height } : { kind: 'hug' },
         padding: {
@@ -57,9 +59,19 @@ export class FigmaParser {
         gap: figmaNode.itemSpacing,
         align: this.mapAlignment(figmaNode.counterAxisAlignItems),
         justify: this.mapAlignment(figmaNode.primaryAxisAlignItems),
+        ...(layoutMode === 'absolute' || layoutMode === 'none'
+          ? {
+              position: 'absolute' as const,
+              ...(bbox && parentBbox
+                ? { left: bbox.x - parentBbox.x, top: bbox.y - parentBbox.y }
+                : {}),
+            }
+          : {}),
       },
       style: {
-        backgroundColor: this.extractFillColor(figmaNode.fills),
+        backgroundColor: fills.solid,
+        gradient: fills.gradient,
+        backgroundImageRef: fills.imageRef,
         borderColor: this.extractStrokeColor(figmaNode.strokes),
         borderWidth: figmaNode.strokeWeight,
         borderRadius: figmaNode.cornerRadius
@@ -92,7 +104,7 @@ export class FigmaParser {
               textAlign: this.mapTextAlign(figmaNode.style?.textAlignHorizontal),
               textDecoration:
                 figmaNode.style?.textDecoration === 'UNDERLINE' ? 'underline' : 'none',
-              color: this.extractFillColor(figmaNode.fills),
+              color: fills.solid,
             }
           : undefined,
       constraints: figmaNode.constraints
@@ -103,8 +115,19 @@ export class FigmaParser {
         : undefined,
       children: (figmaNode.children ?? [])
         .filter((c) => c.visible !== false)
-        .map((c) => this.convertNode(c)),
+        .map((c) => this.convertNode(c, bbox ? { x: bbox.x, y: bbox.y } : parentBbox)),
     });
+
+    if (fills.imageRef) {
+      node.asset = {
+        format: 'png',
+        url: `figma://${fills.imageRef}`,
+        alt: figmaNode.name,
+      };
+      if (type === 'vector') {
+        node.type = 'image';
+      }
+    }
 
     if (figmaNode.type === 'INSTANCE' && figmaNode.componentId) {
       node.metadata = {
@@ -186,16 +209,51 @@ export class FigmaParser {
     return map[value] ?? 'top';
   }
 
-  private extractFillColor(fills?: FigmaFill[]) {
-    const fill = fills?.find((f) => f.visible !== false && f.type === 'SOLID' && f.color);
-    if (!fill?.color) return undefined;
+  private extractFills(fills?: FigmaFill[]): {
+    solid?: { hex: string; rgba?: { r: number; g: number; b: number; a: number } };
+    gradient?: import('@figma-to-code/design-ast').GradientValue;
+    imageRef?: string;
+  } {
+    if (!fills?.length) return {};
+    const visible = fills.filter((f) => f.visible !== false);
+    const imageFill = visible.find((f) => f.type === 'IMAGE' && f.imageRef);
+    const gradientFill = visible.find(
+      (f) => f.type === 'GRADIENT_LINEAR' && f.gradientStops?.length,
+    );
+    const solidFill = visible.find((f) => f.type === 'SOLID' && f.color);
+
     return {
-      hex: rgbaToHex(fill.color.r, fill.color.g, fill.color.b),
+      solid: solidFill ? this.colorFromRgba(solidFill.color!) : undefined,
+      imageRef: imageFill?.imageRef,
+      gradient: gradientFill
+        ? {
+            type: 'linear',
+            stops: gradientFill.gradientStops!.map((s) => ({
+              offset: s.position,
+              color: rgbaToHex(s.color.r, s.color.g, s.color.b),
+            })),
+            angle: this.gradientAngle(gradientFill.gradientHandlePositions),
+          }
+        : undefined,
+    };
+  }
+
+  private gradientAngle(handles?: Array<{ x: number; y: number }>): number | undefined {
+    if (!handles || handles.length < 2) return undefined;
+    const [a, b] = handles;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    return Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  }
+
+  private colorFromRgba(color: { r: number; g: number; b: number; a: number }) {
+    return {
+      hex: rgbaToHex(color.r, color.g, color.b),
       rgba: {
-        r: Math.round(fill.color.r * 255),
-        g: Math.round(fill.color.g * 255),
-        b: Math.round(fill.color.b * 255),
-        a: fill.color.a,
+        r: Math.round(color.r * 255),
+        g: Math.round(color.g * 255),
+        b: Math.round(color.b * 255),
+        a: color.a,
       },
     };
   }

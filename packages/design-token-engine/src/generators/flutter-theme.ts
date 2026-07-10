@@ -1,4 +1,5 @@
 import type { DesignTokenSet } from '@figma-to-code/design-ast';
+import { sanitizeDartIdentifier } from '@figma-to-code/design-ast';
 
 export interface TokenOutput {
   path: string;
@@ -178,7 +179,8 @@ abstract final class AppTheme {
 function mergeColors(tokens: DesignTokenSet): Record<string, string> {
   const result = { ...DEFAULT_COLORS };
   for (const c of tokens.colors) {
-    result[toCamelCase(c.name.replace(/^color-/, ''))] = c.value.replace('#', '');
+    const key = sanitizeDartIdentifier(c.name.replace(/^color[-_]?/i, 'color'));
+    result[key] = c.value.replace('#', '');
   }
   return result;
 }

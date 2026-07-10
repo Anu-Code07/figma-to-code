@@ -142,7 +142,8 @@ export class TokenExtractor {
   }
 
   private colorName(hex: string): string {
-    return `color-${hex.replace('#', '').toLowerCase()}`;
+    const clean = hex.replace('#', '').toLowerCase();
+    return `color${clean}`;
   }
 
   private inferColorCategory(name: string): ColorToken['category'] {

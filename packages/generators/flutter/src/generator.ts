@@ -12,6 +12,7 @@ import { FlutterWidgetRenderer } from './widget-renderer.js';
 import {
   generateCoreLayer,
   generateFeatureModule,
+  generateScreenModule,
   type FeatureDesignContent,
 } from './feature-scaffold.js';
 import { generateProjectScaffold } from './project-scaffold.js';
@@ -31,11 +32,7 @@ export class FlutterGenerator extends BaseGenerator {
       files.push(this.createFile(themeFile.path, themeFile.content, 'dart', 'token'));
     }
 
-    if (
-      context.options.scope === 'feature' ||
-      context.options.scope === 'screen' ||
-      context.options.scope === 'project'
-    ) {
+    if (context.options.scope === 'feature' || context.options.scope === 'project') {
       files.push(...generateCoreLayer());
     }
 
@@ -58,7 +55,7 @@ export class FlutterGenerator extends BaseGenerator {
         );
         files.push(...compoundFiles);
         files.push(
-          ...generateFeatureModule(screenContext, (path, content, kind) =>
+          ...generateScreenModule(screenContext, (path, content, kind) =>
             this.createFile(path, content, 'dart', kind),
           designContent),
         );
@@ -71,7 +68,7 @@ export class FlutterGenerator extends BaseGenerator {
         );
         files.push(...compoundFiles);
         files.push(
-          ...generateFeatureModule(context, (path, content, kind) =>
+          ...generateScreenModule(context, (path, content, kind) =>
             this.createFile(path, content, 'dart', kind),
           designContent),
         );
@@ -113,7 +110,7 @@ export class FlutterGenerator extends BaseGenerator {
         );
         files.push(...compoundFiles);
         files.push(
-          ...generateFeatureModule(screenContext, (path, content, kind) =>
+          ...generateScreenModule(screenContext, (path, content, kind) =>
             this.createFile(path, content, 'dart', kind),
           designContent),
         );

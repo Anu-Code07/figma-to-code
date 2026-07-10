@@ -1,4 +1,5 @@
 import type { DesignTokenSet } from '@figma-to-code/design-ast';
+import { sanitizeDartIdentifier } from '@figma-to-code/design-ast';
 
 export interface TokenResolverOptions {
   framework: 'flutter' | 'react' | 'nextjs' | 'react-native';
@@ -93,12 +94,12 @@ export class TokenResolver {
   }
 
   private toTokenId(name: string): string {
-    return name
-      .replace(/^color-/, '')
-      .replace(/^spacing-/, '')
-      .replace(/^radius-/, '')
-      .replace(/[-_](.)/g, (_, c: string) => c.toUpperCase())
-      .replace(/^./, (c) => c.toLowerCase());
+    return sanitizeDartIdentifier(
+      name
+        .replace(/^color[-_]?/i, 'color')
+        .replace(/^spacing[-_]?/i, 'spacing')
+        .replace(/^radius[-_]?/i, 'radius'),
+    );
   }
 
   private toKebab(name: string): string {

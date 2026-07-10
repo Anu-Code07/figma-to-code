@@ -50,6 +50,7 @@ describe('FlutterGenerator', () => {
         framework: 'flutter' as const,
         scope,
         includeTests: true,
+        componentName: undefined as string | undefined,
       },
       document,
       project: null,
@@ -120,6 +121,28 @@ describe('FlutterGenerator', () => {
     const parent = result.files.find((f) => f.path.endsWith('product_card/product_card.dart'));
     expect(parent!.content).toContain('const BuyButton()');
     expect(parent!.content).toContain("import 'buy_button.dart'");
+  });
+
+  it('generates screen module without fake repository', async () => {
+    const result = await generator.generate(buildContext('screen'));
+    const paths = result.files.map((f) => f.path);
+
+    expect(paths.some((p) => p.includes('presentation/pages/login_screen_page.dart'))).toBe(true);
+    expect(paths.some((p) => p.includes('presentation/bloc/login_screen_bloc.dart'))).toBe(true);
+    expect(paths.some((p) => p.includes('data/datasources'))).toBe(false);
+    expect(paths.some((p) => p.includes('domain/repositories'))).toBe(false);
+
+    const bloc = result.files.find((f) => f.path.endsWith('login_screen_bloc.dart'));
+    expect(bloc!.content).not.toContain('Repository');
+  });
+
+  it('uses componentName override for widget class', async () => {
+    const ctx = buildContext('component');
+    ctx.options.componentName = 'PromoBanner';
+    const root = ctx.document.root;
+    const result = await generator.generate(ctx);
+    const widget = result.files.find((f) => f.content.includes('class PromoBanner'));
+    expect(widget).toBeDefined();
   });
 
   it('generates full clean architecture feature module', async () => {
