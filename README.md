@@ -114,17 +114,27 @@ Design2Code AI includes an MCP server for direct use in Claude Desktop and Curso
   "mcpServers": {
     "design2code": {
       "command": "npx",
-      "args": ["@figma-to-code/mcp-server"],
-      "env": {
-        "FIGMA_TOKEN": "your-figma-token"
-      }
+      "args": ["@figma-to-code/mcp-server"]
     }
   }
 }
 ```
 
+No AI API key is needed in MCP config — Cursor/Claude provides the host LLM.
+
+### Figma authentication (MCP)
+
+Use the `design2code_login_figma` tool with a [Figma personal access token](https://www.figma.com/developers/api#access-tokens), or set `FIGMA_TOKEN` in MCP env. Tokens are saved to `~/.design2code/config.json` (shared with the CLI).
+
+```bash
+# CLI alternative
+design2code login --figma-token <your-token>
+```
+
 ### MCP Tools
 
+- `design2code_login_figma` — Authenticate with Figma (personal access token)
+- `design2code_figma_status` — Check Figma auth status
 - `design2code_generate` — Generate code from Design AST or Figma
 - `design2code_import_figma` — Import Figma file to Design AST
 - `design2code_parse_design_md` — Parse design.md configuration
