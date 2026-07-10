@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { createCompiler, parseDesignMd, registerGenerator } from '@figma-to-code/compiler-core';
 import { createMcpHostComplete } from './host-llm.js';
+import { getFigmaAuthStatus, loginFigma, resolveFigmaToken } from './figma-auth.js';
 import { createFigmaClient, parseFigmaFile } from '@figma-to-code/figma-parser';
 import { detectProject } from '@figma-to-code/merge-engine';
 import { FlutterGenerator } from '@figma-to-code/generator-flutter';
@@ -27,8 +28,12 @@ registerGenerator('nextjs', new NextjsGenerator());
 registerGenerator('react-native', new ReactNativeGenerator());
 
 const server = new Server(
-  { name: 'design2code', version: '0.1.0' },
-  { capabilities: { tools: {}, resources: {} } },
+  { name: 'design2code', version: '0.1.4' },
+  {
+    capabilities: { tools: {}, resources: {} },
+    instructions:
+      'Design2Code compiles Figma designs into production code. AI uses the host LLM (Cursor/Claude) — no AI API key needed. For Figma, call design2code_login_figma with a personal access token from figma.com/developers, or set FIGMA_TOKEN in MCP env.',
+  },
 );
 
 const GenerateSchema = z.object({
@@ -57,7 +62,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           scope: { type: 'string', enum: ['component', 'screen', 'feature', 'project'] },
           astPath: { type: 'string', description: 'Path to design-ast.json' },
           figmaFileKey: { type: 'string', description: 'Figma file key' },
-          figmaToken: { type: 'string', description: 'Figma access token' },
+          figmaToken: {
+            type: 'string',
+            description: 'Figma access token (optional if logged in via design2code_login_figma)',
+          },
           designSystemPath: { type: 'string', description: 'Path to design.md' },
           projectRoot: { type: 'string', description: 'Existing project root for merge' },
           mergeStrategy: { type: 'string', enum: ['create', 'merge', 'replace', 'preview'] },
@@ -74,10 +82,33 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         type: 'object',
         properties: {
           fileKey: { type: 'string' },
-          token: { type: 'string' },
+          token: {
+            type: 'string',
+            description: 'Figma access token (optional if logged in via design2code_login_figma)',
+          },
           outputPath: { type: 'string' },
         },
-        required: ['fileKey', 'token'],
+        required: ['fileKey'],
+      },
+    },
+    {
+      name: 'design2code_login_figma',
+      description:
+        'Authenticate with Figma using a personal access token. Saves to ~/.design2code/config.json (shared with CLI). Get a token at figma.com → Settings → Security → Personal access tokens.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          token: { type: 'string', description: 'Figma personal access token' },
+        },
+        required: ['token'],
+      },
+    },
+    {
+      name: 'design2code_figma_status',
+      description: 'Check whether Figma is authenticated and which account is connected',
+      inputSchema: {
+        type: 'object',
+        properties: {},
       },
     },
     {
@@ -127,7 +158,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'design2code_generate':
         return await handleGenerate(args);
       case 'design2code_import_figma':
-        return await handleImport(args as { fileKey: string; token: string; outputPath?: string });
+        return await handleImport(args as { fileKey: string; token?: string; outputPath?: string });
+      case 'design2code_login_figma':
+        return await handleLoginFigma(args as { token: string });
+      case 'design2code_figma_status':
+        return await handleFigmaStatus();
       case 'design2code_parse_design_md':
         return await handleParseDesignMd(args as { path: string });
       case 'design2code_detect_project':
@@ -235,8 +270,52 @@ async function handleGenerate(args: unknown) {
   };
 }
 
-async function handleImport(args: { fileKey: string; token: string; outputPath?: string }) {
-  const client = createFigmaClient(args.token);
+async function handleLoginFigma(args: { token: string }) {
+  const result = await loginFigma(args.token);
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(
+          {
+            ...result,
+            message: result.verified
+              ? `Authenticated as ${result.handle} (${result.email})`
+              : 'Token saved but verification failed — check the token is valid',
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+  };
+}
+
+async function handleFigmaStatus() {
+  const status = await getFigmaAuthStatus();
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(
+          {
+            ...status,
+            message: status.authenticated
+              ? status.verified
+                ? `Connected as ${status.handle} (${status.email}) via ${status.source}`
+                : 'Token found but verification failed'
+              : 'Not authenticated — run design2code_login_figma',
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+  };
+}
+
+async function handleImport(args: { fileKey: string; token?: string; outputPath?: string }) {
+  const client = createFigmaClient(await resolveFigmaToken(args.token));
   const figmaFile = await client.getFile(args.fileKey);
   const document = parseFigmaFile(figmaFile, { fileKey: args.fileKey });
 
@@ -288,8 +367,8 @@ async function handlePreview(args: unknown) {
 }
 
 async function loadDocument(params: z.infer<typeof GenerateSchema>): Promise<DesignDocument> {
-  if (params.figmaFileKey && params.figmaToken) {
-    const client = createFigmaClient(params.figmaToken);
+  if (params.figmaFileKey) {
+    const client = createFigmaClient(await resolveFigmaToken(params.figmaToken));
     const figmaFile = await client.getFile(params.figmaFileKey);
     return parseFigmaFile(figmaFile, { fileKey: params.figmaFileKey });
   }
