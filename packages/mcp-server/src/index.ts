@@ -28,7 +28,7 @@ registerGenerator('nextjs', new NextjsGenerator());
 registerGenerator('react-native', new ReactNativeGenerator());
 
 const server = new Server(
-  { name: 'design2code', version: '0.1.3' },
+  { name: 'design2code', version: '0.1.4' },
   {
     capabilities: { tools: {}, resources: {} },
     instructions:
