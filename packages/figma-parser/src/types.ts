@@ -70,6 +70,8 @@ export interface FigmaFill {
   visible?: boolean;
   color?: { r: number; g: number; b: number; a: number };
   imageRef?: string;
+  gradientStops?: Array<{ position: number; color: { r: number; g: number; b: number; a: number } }>;
+  gradientHandlePositions?: Array<{ x: number; y: number }>;
 }
 
 export interface FigmaStroke {

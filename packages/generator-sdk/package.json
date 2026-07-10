@@ -15,13 +15,15 @@
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
     "@figma-to-code/design-ast": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   },
   "license": "MIT",
   "files": [

@@ -31,7 +31,9 @@ export function generateCompoundFiles(
   createFile: CreateFileFn,
   hooks: CompoundFrameworkHooks,
 ): CompoundGenerationResult {
-  const plan = planCompoundComponents(root, context.document);
+  const plan = planCompoundComponents(root, context.document, {
+    rootName: context.options.componentName,
+  });
   const registry = new ComponentRegistry(plan);
   const files: GeneratedFile[] = [];
 

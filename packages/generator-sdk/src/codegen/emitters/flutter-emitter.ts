@@ -43,8 +43,14 @@ export class FlutterFidelityEmitter {
     if (node.type === 'text' && node.text) {
       return this.emitText(node, s, pad);
     }
+    if (node.type === 'image' || node.asset?.url || s.backgroundImageRef) {
+      return this.emitImage(node, s, pad, activeRegistry);
+    }
     if (node.layout.mode === 'horizontal' || node.layout.mode === 'vertical') {
       return this.emitFlex(node, s, pad, activeRegistry);
+    }
+    if (this.usesAbsoluteLayout(node)) {
+      return this.emitStack(node, s, pad, activeRegistry);
     }
     if (node.children.length === 0) {
       return this.emitContainer(node, s, pad);
@@ -136,19 +142,120 @@ ${pad}  textAlign: ${align},
 ${pad})`;
   }
 
+  private usesAbsoluteLayout(node: DesignNode): boolean {
+    if (node.layout.mode === 'absolute' || node.layout.mode === 'none' || node.layout.mode === 'stack') {
+      return node.children.some(
+        (c) => c.layout.position === 'absolute' || c.layout.left !== undefined || c.layout.top !== undefined,
+      );
+    }
+    return false;
+  }
+
+  private emitStack(
+    node: DesignNode,
+    s: FigmaComputedStyle,
+    pad: string,
+    registry?: ComponentRegistry,
+  ): string {
+    const children = node.children
+      .map((c) => {
+        const childPad = '  '.repeat(indentLevel(pad) + 2);
+        const childWidget = this.renderChild(c, indentLevel(pad) + 3, registry);
+        const left = c.layout.left ?? 0;
+        const top = c.layout.top ?? 0;
+        const hasPosition = c.layout.left !== undefined || c.layout.top !== undefined;
+        if (!hasPosition) return childWidget;
+        return `Positioned(
+${childPad}  left: ${left},
+${childPad}  top: ${top},
+${childPad}  child: ${childWidget},
+${childPad})`;
+      })
+      .join(`,\n${pad}    `);
+
+    const stackBody = `SizedBox(
+${pad}  ${this.sizeProps(s, pad + '  ')}child: Stack(
+${pad}    clipBehavior: Clip.none,
+${pad}    children: [
+${pad}      ${children}
+${pad}    ],
+${pad}  ),
+${pad})`;
+
+    if (s.gradient || s.backgroundColor || s.backgroundImageRef) {
+      return `Container(
+${pad}  decoration: ${this.boxDecorationExpr(s)},
+${pad}  child: ${stackBody},
+${pad})`;
+    }
+
+    return stackBody;
+  }
+
+  private emitImage(
+    node: DesignNode,
+    s: FigmaComputedStyle,
+    pad: string,
+    registry?: ComponentRegistry,
+  ): string {
+    if (node.children.length > 0) {
+      return this.emitStack(node, s, pad, registry);
+    }
+    const imageExpr = this.imageProviderExpr(node, s);
+    return `Container(
+${pad}  key: testKey,
+${this.sizeExpr(s, pad)}${pad}  decoration: BoxDecoration(
+${imageExpr ? `${pad}    image: ${imageExpr},\n` : ''}${s.gradient ? `${pad}    gradient: ${this.linearGradientExpr(s.gradient)},\n` : ''}${s.backgroundColor && !s.gradient ? `${pad}    color: ${this.tokens.color(s.backgroundColor)},\n` : ''}${pad}  ),
+${pad})`;
+  }
+
+  private imageProviderExpr(node: DesignNode, s: FigmaComputedStyle): string | null {
+    const url = node.asset?.url ?? (s.backgroundImageRef ? `figma://${s.backgroundImageRef}` : undefined);
+    if (!url) return null;
+    if (url.startsWith('figma://')) {
+      const ref = url.replace('figma://', '');
+      return `DecorationImage(
+        image: NetworkImage(FigmaAssets.image_${ref.replace(/[^a-zA-Z0-9]/g, '_')}),
+        fit: BoxFit.cover,
+      )`;
+    }
+    return `DecorationImage(image: NetworkImage('${escapeDart(url)}'), fit: BoxFit.cover)`;
+  }
+
+  private linearGradientExpr(gradient: NonNullable<FigmaComputedStyle['gradient']>): string {
+    const stops = gradient.stops
+      .map((stop) => `GradientStop(offset: ${stop.offset}, color: ${this.tokens.color(stop.color)})`)
+      .join(', ');
+    const begin = gradient.angle !== undefined ? this.gradientAlignment(gradient.angle, true) : 'Alignment.topCenter';
+    const end = gradient.angle !== undefined ? this.gradientAlignment(gradient.angle, false) : 'Alignment.bottomCenter';
+    return `LinearGradient(begin: ${begin}, end: ${end}, stops: [${stops}])`;
+  }
+
+  private gradientAlignment(angleDeg: number, begin: boolean): string {
+    const rad = (angleDeg * Math.PI) / 180;
+    const x = Math.cos(rad).toFixed(2);
+    const y = Math.sin(rad).toFixed(2);
+    return begin ? `Alignment(${x}, ${y})` : `Alignment(${(-Number(x)).toFixed(2)}, ${(-Number(y)).toFixed(2)})`;
+  }
+
+  private sizeProps(s: FigmaComputedStyle, pad: string): string {
+    const lines: string[] = [];
+    if (typeof s.width === 'number') lines.push(`${pad}width: ${s.width},`);
+    if (typeof s.height === 'number') lines.push(`${pad}height: ${s.height},`);
+    return lines.length ? `${lines.join('\n')}\n` : '';
+  }
+
   private emitFlex(node: DesignNode, s: FigmaComputedStyle, pad: string, registry?: ComponentRegistry): string {
     const isRow = s.flexDirection === 'row';
     const widget = isRow ? 'Row' : 'Column';
-    const mainAxis = isRow ? 'MainAxisAlignment' : 'MainAxisAlignment';
-    const crossAxis = isRow ? 'CrossAxisAlignment' : 'CrossAxisAlignment';
     const children = node.children
       .map((c) => this.renderChild(c, indentLevel(pad) + 2, registry))
       .join(`,\n${pad}    `);
     const gap = s.gap ?? 0;
 
     return `${widget}(
-${pad}  ${mainAxis}: ${this.flutterMainAxis(s.justifyContent)},
-${pad}  ${crossAxis}: ${this.flutterCrossAxis(s.alignItems)},
+${pad}  mainAxisAlignment: ${this.flutterMainAxis(s.justifyContent)},
+${pad}  crossAxisAlignment: ${this.flutterCrossAxis(s.alignItems)},
 ${gap > 0 ? `${pad}  spacing: ${gap},\n` : ''}${pad}  children: [
 ${pad}    ${children}
 ${pad}  ],
@@ -191,7 +298,11 @@ ${pad})`;
 
   private boxDecorationExpr(s: FigmaComputedStyle): string {
     const parts: string[] = ['BoxDecoration('];
-    if (s.backgroundColor) parts.push(`color: ${this.tokens.color(s.backgroundColor)},`);
+    if (s.gradient) {
+      parts.push(`gradient: ${this.linearGradientExpr(s.gradient)},`);
+    } else if (s.backgroundColor) {
+      parts.push(`color: ${this.tokens.color(s.backgroundColor)},`);
+    }
     if (s.borderRadius) parts.push(`borderRadius: BorderRadius.circular(${this.borderRadiusExpr(s.borderRadius)}),`);
     if (s.borderWidth && s.borderColor) {
       parts.push(`border: Border.all(color: ${this.tokens.color(s.borderColor)}, width: ${s.borderWidth}),`);

@@ -93,6 +93,120 @@ final class Error<T> extends Result<T> {
   ];
 }
 
+export function generateScreenModule(
+  context: GeneratorContext,
+  createFile: (path: string, content: string, kind: GeneratedFile['kind']) => GeneratedFile,
+  designContent?: FeatureDesignContent,
+): GeneratedFile[] {
+  const featureName = context.options.componentName ?? context.document.name;
+  const pascal = toPascalCase(featureName);
+  const snake = toSnakeCase(featureName);
+  const files: GeneratedFile[] = [];
+
+  if (designContent) {
+    files.push(
+      createFile(
+        `lib/features/${snake}/presentation/widgets/${snake}_body.dart`,
+        `import 'package:flutter/material.dart';
+import '${designContent.widgetImportPath}.dart';
+
+/// Figma design — static presentation widget
+class ${pascal}Body extends StatelessWidget {
+  const ${pascal}Body({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ${designContent.widgetClassName}();
+  }
+}
+`,
+        'feature',
+      ),
+    );
+  }
+
+  files.push(
+    createFile(
+      `lib/features/${snake}/presentation/bloc/${snake}_state.dart`,
+      `import 'package:equatable/equatable.dart';
+
+sealed class ${pascal}State extends Equatable {
+  const ${pascal}State();
+
+  @override
+  List<Object?> get props => [];
+}
+
+final class ${pascal}Ready extends ${pascal}State {
+  const ${pascal}Ready();
+}
+`,
+      'feature',
+    ),
+  );
+
+  files.push(
+    createFile(
+      `lib/features/${snake}/presentation/bloc/${snake}_bloc.dart`,
+      `import 'package:flutter_bloc/flutter_bloc.dart';
+import '${snake}_state.dart';
+
+/// Presentation BLoC — no data layer; displays Figma design directly
+class ${pascal}Bloc extends Cubit<${pascal}State> {
+  ${pascal}Bloc() : super(const ${pascal}Ready());
+}
+`,
+      'feature',
+    ),
+  );
+
+  files.push(
+    createFile(
+      `lib/features/${snake}/presentation/pages/${snake}_page.dart`,
+      `import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/${snake}_bloc.dart';
+import '../bloc/${snake}_state.dart';
+${designContent ? `import '../widgets/${snake}_body.dart';` : ''}
+
+/// Screen page — presentation only (no repository / fake API)
+class ${pascal}Page extends StatelessWidget {
+  const ${pascal}Page({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => ${pascal}Bloc(),
+      child: const _${pascal}View(),
+    );
+  }
+}
+
+class _${pascal}View extends StatelessWidget {
+  const _${pascal}View();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('${pascal}')),
+      body: BlocBuilder<${pascal}Bloc, ${pascal}State>(
+        builder: (context, state) {
+          return switch (state) {
+            ${pascal}Ready() => ${designContent ? `const ${pascal}Body()` : `const Center(child: Text('${pascal}'))`},
+          };
+        },
+      ),
+    );
+  }
+}
+`,
+      'feature',
+    ),
+  );
+
+  return files;
+}
+
 export function generateFeatureModule(
   context: GeneratorContext,
   createFile: (path: string, content: string, kind: GeneratedFile['kind']) => GeneratedFile,

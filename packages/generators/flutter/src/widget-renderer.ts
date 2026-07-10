@@ -1,5 +1,6 @@
 import type { DesignNode } from '@figma-to-code/design-ast';
 import { FlutterFidelityEmitter, type ComponentRegistry } from '@figma-to-code/generator-sdk';
+import { collectFigmaImageAssets, renderFigmaAssetsDart } from '@figma-to-code/generator-sdk';
 import type { DesignTokenSet } from '@figma-to-code/design-ast';
 
 export class FlutterWidgetRenderer {
@@ -27,13 +28,14 @@ export class FlutterWidgetRenderer {
     const props = this.buildProps(node);
     const fields = this.buildFields(node);
     const importBlock = imports.length > 0 ? `${imports.join('\n')}\n` : '';
+    const figmaAssets = renderFigmaAssetsDart(collectFigmaImageAssets(node));
 
     return `import 'package:flutter/material.dart';
 import 'package:design2code_app/core/theme/app_colors.dart';
 import 'package:design2code_app/core/theme/app_spacing.dart';
 import 'package:design2code_app/core/theme/app_radius.dart';
 import 'package:design2code_app/core/theme/app_typography.dart';
-${importBlock}
+${importBlock}${figmaAssets}
 /// Compound widget — composes reusable sub-components from Figma design
 class ${className} extends StatelessWidget {
   const ${className}({
