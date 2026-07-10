@@ -17,20 +17,27 @@ function extractSamplingText(result: CreateMessageResult): string {
   return '';
 }
 
-/** Route AI calls to the MCP host LLM (Cursor / Claude Desktop) via sampling */
+/** Route AI calls to the MCP host LLM (Cursor / Claude Desktop) via sampling — no API key in the server. */
 export function createMcpHostComplete(server: Server): HostCompleteFn {
   return async (prompt: string, options: AICompletionOptions = {}) => {
-    const result = await server.createMessage({
-      messages: [
-        {
-          role: 'user',
-          content: { type: 'text', text: prompt },
-        },
-      ],
-      maxTokens: options.maxTokens ?? 4096,
-      systemPrompt: options.systemPrompt,
-    });
+    try {
+      const result = await server.createMessage({
+        messages: [
+          {
+            role: 'user',
+            content: { type: 'text', text: prompt },
+          },
+        ],
+        maxTokens: options.maxTokens ?? 4096,
+        systemPrompt: options.systemPrompt,
+      });
 
-    return extractSamplingText(result);
+      return extractSamplingText(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Host LLM unavailable (${message}). Ensure Cursor/Claude Desktop supports MCP sampling — no separate API key is required.`,
+      );
+    }
   };
 }

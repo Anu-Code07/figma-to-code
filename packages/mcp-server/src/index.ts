@@ -27,9 +27,23 @@ registerGenerator('nextjs', new NextjsGenerator());
 registerGenerator('react-native', new ReactNativeGenerator());
 
 const server = new Server(
-  { name: 'design2code', version: '0.1.0' },
-  { capabilities: { tools: {}, resources: {} } },
+  { name: 'design2code', version: '0.1.3' },
+  {
+    capabilities: { tools: {}, resources: {} },
+    instructions:
+      'Design2Code compiles Figma designs into production code. AI enhancement uses the host LLM (Cursor/Claude) via MCP sampling — no API key is needed in this server. Set FIGMA_TOKEN in env for Figma import.',
+  },
 );
+
+function resolveFigmaToken(explicit?: string): string {
+  const token = explicit ?? process.env.FIGMA_TOKEN;
+  if (!token) {
+    throw new Error(
+      'Figma token required. Pass figmaToken/token in the tool call or set FIGMA_TOKEN in the MCP server env.',
+    );
+  }
+  return token;
+}
 
 const GenerateSchema = z.object({
   framework: z.enum(['flutter', 'react', 'nextjs', 'react-native']),
@@ -57,7 +71,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           scope: { type: 'string', enum: ['component', 'screen', 'feature', 'project'] },
           astPath: { type: 'string', description: 'Path to design-ast.json' },
           figmaFileKey: { type: 'string', description: 'Figma file key' },
-          figmaToken: { type: 'string', description: 'Figma access token' },
+          figmaToken: { type: 'string', description: 'Figma access token (optional if FIGMA_TOKEN env is set)' },
           designSystemPath: { type: 'string', description: 'Path to design.md' },
           projectRoot: { type: 'string', description: 'Existing project root for merge' },
           mergeStrategy: { type: 'string', enum: ['create', 'merge', 'replace', 'preview'] },
@@ -74,10 +88,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         type: 'object',
         properties: {
           fileKey: { type: 'string' },
-          token: { type: 'string' },
+          token: { type: 'string', description: 'Figma access token (optional if FIGMA_TOKEN env is set)' },
           outputPath: { type: 'string' },
         },
-        required: ['fileKey', 'token'],
+        required: ['fileKey'],
       },
     },
     {
@@ -235,8 +249,8 @@ async function handleGenerate(args: unknown) {
   };
 }
 
-async function handleImport(args: { fileKey: string; token: string; outputPath?: string }) {
-  const client = createFigmaClient(args.token);
+async function handleImport(args: { fileKey: string; token?: string; outputPath?: string }) {
+  const client = createFigmaClient(resolveFigmaToken(args.token));
   const figmaFile = await client.getFile(args.fileKey);
   const document = parseFigmaFile(figmaFile, { fileKey: args.fileKey });
 
@@ -288,8 +302,8 @@ async function handlePreview(args: unknown) {
 }
 
 async function loadDocument(params: z.infer<typeof GenerateSchema>): Promise<DesignDocument> {
-  if (params.figmaFileKey && params.figmaToken) {
-    const client = createFigmaClient(params.figmaToken);
+  if (params.figmaFileKey) {
+    const client = createFigmaClient(resolveFigmaToken(params.figmaToken));
     const figmaFile = await client.getFile(params.figmaFileKey);
     return parseFigmaFile(figmaFile, { fileKey: params.figmaFileKey });
   }

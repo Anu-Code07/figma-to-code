@@ -4,8 +4,7 @@
       "command": "npx",
       "args": ["@figma-to-code/mcp-server"],
       "env": {
-        "FIGMA_TOKEN": "${FIGMA_TOKEN}",
-        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
+        "FIGMA_TOKEN": "${FIGMA_TOKEN}"
       }
     }
   }
